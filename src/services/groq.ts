@@ -221,3 +221,35 @@ Use appropriate Markdown formatting:
     throw new Error("Failed to generate chapter content");
   }
 }
+
+export const generateResponse = async (imageData: string): Promise<string> => {
+  try {
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: {
+                url: imageData,
+              },
+            },
+            {
+              type: "text",
+              text: "Analyze this whiteboard drawing and provide a response in a standard markdown format which looks professional You tone should be like a teacher. If it contains:\n\n- Mathematical equations: Show the solution steps\n- Code: Explain the logic and suggest improvements\n- Diagrams/flowcharts: Describe the structure and relationships\n\nFocus only on the content visible in the drawing. If there is any question, answer it. Do not provide the information on whats on the whiteboard. Just the question and the answer.",
+            },
+          ],
+        },
+      ],
+      model: "llama-3.2-90b-vision-preview",
+      temperature: 0.7,
+      max_tokens: 2048,
+    });
+
+    return completion.choices[0]?.message?.content || "No response generated";
+  } catch (error) {
+    console.error("Error generating response:", error);
+    throw error;
+  }
+};

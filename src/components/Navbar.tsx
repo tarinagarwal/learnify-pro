@@ -14,6 +14,7 @@ import {
   FileText,
   LogIn,
   UserPlus,
+  LayoutDashboard,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -146,6 +147,7 @@ export default function Navbar() {
             <>
               <div className="hidden lg:flex lg:items-center lg:space-x-4 xl:space-x-6">
                 <NavLink to="/">Home</NavLink>
+                <NavLink to="/dashboard">Dashboard</NavLink>
                 <NavLink to="/quiz">Quiz</NavLink>
                 <NavLink to="/history">History</NavLink>
                 <NavLink to="/resources">Resources</NavLink>
@@ -204,6 +206,9 @@ export default function Navbar() {
                     <div className="flex flex-col space-y-4 mt-4">
                       <NavLink to="/" icon={Home}>
                         Home
+                      </NavLink>
+                      <NavLink to="/dashboard" icon={LayoutDashboard}>
+                        Dashboard
                       </NavLink>
                       <NavLink to="/quiz" icon={Book}>
                         Quiz

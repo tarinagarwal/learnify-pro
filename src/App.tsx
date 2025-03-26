@@ -11,6 +11,10 @@ import Resources from "./pages/Resources";
 import PdfChat from "./pages/PdfChat";
 import Courses from "./pages/Courses";
 import ChapterContent from "./pages/ChapterContent";
+import { Dashboard } from "./pages/Dashboard";
+import { Notebook } from "./pages/Notebook";
+import { History as BlackboardHistory } from "./pages/BlackboardHistory";
+import { Whiteboard } from "./components/whiteboard";
 
 function App() {
   return (
@@ -65,6 +69,38 @@ function App() {
             element={
               <AuthGuard>
                 <ChapterContent />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <AuthGuard>
+                <Dashboard />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/notebook/:id"
+            element={
+              <AuthGuard>
+                <Notebook />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/blackboard-history"
+            element={
+              <AuthGuard>
+                <BlackboardHistory />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/whiteboard"
+            element={
+              <AuthGuard>
+                <Whiteboard />
               </AuthGuard>
             }
           />
