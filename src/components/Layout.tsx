@@ -9,11 +9,11 @@ export default function Layout() {
       <main className="flex-grow pt-16">
         <Outlet />
       </main>
-      <footer className="bg-gray-100 border border-t-black py-6 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-black border text-white border-t-black py-6 px-4 sm:px-6 lg:px-8">
         <div
           className="max-w-7xl mx-auto flex flex-col items-center space-y-2 
                   md:flex-row md:justify-between md:space-y-0 
-                  text-center text-muted-foreground"
+                  text-center "
         >
           {/* Copyright */}
           <p>
@@ -26,7 +26,7 @@ export default function Layout() {
               href="https://tarin-agarwal.web.app/home"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-gray-600"
+              className="underline  hover:text-gray-600"
             >
               Tarin Agarwal
             </a>
@@ -40,7 +40,7 @@ export default function Layout() {
               rel="noopener noreferrer"
               className="inline-flex items-center border border-gray-300 
                    rounded-md px-4 py-2 bg-white hover:bg-white
-                   hover:text-gray-700 transition-colors"
+                   hover:text-gray-700 transition-colors text-black"
             >
               🌟 Star on Github
             </a>

@@ -17,7 +17,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="bg-gray-200 py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl font-extrabold tracking-tigh" style={{textDecoration:''}} >
+            <h1 className="text-5xl font-extrabold tracking-tigh" >
               Welcome to Learnify</h1>
 
             <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto">
