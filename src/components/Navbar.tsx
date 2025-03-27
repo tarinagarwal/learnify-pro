@@ -15,6 +15,7 @@ import {
   LogIn,
   UserPlus,
   LayoutDashboard,
+  LucideMessageCircleQuestion,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,7 @@ export default function Navbar() {
     navigate("/");
   };
 
+  // Our custom link for standard nav items
   const NavLink = ({
     to,
     icon: Icon,
@@ -145,16 +147,52 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <>
+              {/* DESKTOP NAV LINKS */}
               <div className="hidden lg:flex lg:items-center lg:space-x-4 xl:space-x-6">
-                <NavLink to="/">Home</NavLink>
-                <NavLink to="/dashboard">Dashboard</NavLink>
-                <NavLink to="/quiz">Quiz</NavLink>
-                <NavLink to="/history">History</NavLink>
-                <NavLink to="/resources">Resources</NavLink>
-                <NavLink to="/pdf-chat">PDF Chat</NavLink>
-                <NavLink to="/courses">Courses</NavLink>
+                <NavLink to="/" icon={Home}>
+                  Home
+                </NavLink>
+                <NavLink to="/dashboard" icon={Book}>
+                  Notebooks
+                </NavLink>
+
+                {/* QUIZ DROPDOWN */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div
+                      className={cn(
+                        "flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors relative group py-2 px-4 -mx-4 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                      )}
+                    >
+                      <LucideMessageCircleQuestion className="h-4 w-4" />
+                      <span>Quiz</span>
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem asChild>
+                      <Link to="/quiz">Generate Quiz</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/history">Quiz History</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <NavLink to="/resources" icon={FileText}>
+                  Resources
+                </NavLink>
+                <NavLink to="/pdf-chat" icon={MessageSquare}>
+                  PDF Chat
+                </NavLink>
+                <NavLink to="/courses" icon={GraduationCap}>
+                  Courses
+                </NavLink>
+                <NavLink to="/community" icon={GraduationCap}>
+                  Community
+                </NavLink>
               </div>
 
+              {/* USER DROPDOWN & MOBILE MENU TOGGLE */}
               <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -190,6 +228,7 @@ export default function Navbar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {/* MOBILE SHEET (SIDEBAR) */}
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="lg:hidden">
@@ -208,14 +247,38 @@ export default function Navbar() {
                         Home
                       </NavLink>
                       <NavLink to="/dashboard" icon={LayoutDashboard}>
-                        Dashboard
+                        Notebooks
                       </NavLink>
-                      <NavLink to="/quiz" icon={Book}>
-                        Quiz
-                      </NavLink>
-                      <NavLink to="/history" icon={History}>
-                        History
-                      </NavLink>
+
+                      {/* QUIZ DROPDOWN IN MOBILE */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div
+                            className={cn(
+                              "flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors relative group py-2 px-4 -mx-4 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                            )}
+                          >
+                            <Book className="h-4 w-4" />
+                            <span>Quiz</span>
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem asChild>
+                            <Link to="/quiz" onClick={() => setIsOpen(false)}>
+                              Generate Quiz
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to="/history"
+                              onClick={() => setIsOpen(false)}
+                            >
+                              Quiz History
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
                       <NavLink to="/resources" icon={FileText}>
                         Resources
                       </NavLink>
@@ -224,6 +287,9 @@ export default function Navbar() {
                       </NavLink>
                       <NavLink to="/courses" icon={GraduationCap}>
                         Courses
+                      </NavLink>
+                      <NavLink to="/community" icon={GraduationCap}>
+                        Community
                       </NavLink>
                       <Button variant="outline" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
@@ -235,6 +301,7 @@ export default function Navbar() {
               </div>
             </>
           ) : (
+            /* IF NOT AUTHENTICATED */
             <div className="flex items-center space-x-2 sm:space-x-4">
               <Button variant="ghost" asChild className="px-2 sm:px-4">
                 <Link to="/login" className="flex items-center">

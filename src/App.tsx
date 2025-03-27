@@ -14,7 +14,9 @@ import ChapterContent from "./pages/ChapterContent";
 import { Dashboard } from "./pages/Dashboard";
 import { Notebook } from "./pages/Notebook";
 import { History as BlackboardHistory } from "./pages/BlackboardHistory";
-import { Whiteboard } from "./components/whiteboard";
+import { Whiteboard } from "./components/Whiteboard";
+import Community from "./pages/Community";
+import CommunityChat from "./pages/CommunityChat";
 
 function App() {
   return (
@@ -101,6 +103,22 @@ function App() {
             element={
               <AuthGuard>
                 <Whiteboard />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <AuthGuard>
+                <Community />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/community/:communityId"
+            element={
+              <AuthGuard>
+                <CommunityChat />
               </AuthGuard>
             }
           />
