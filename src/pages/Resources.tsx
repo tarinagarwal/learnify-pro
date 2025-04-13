@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import type React from "react";
+import { useState, useEffect } from "react";
 import {
   Book,
-  Upload,
   Download,
   MessageSquare,
   Brain,
   Bookmark,
   BookmarkCheck,
+  Search,
+  Plus,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { generatePdfThumbnail } from "../utils/pdfThumbnail";
@@ -31,7 +35,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SearchBar } from "@/components/SearchBar";
 import { usePagination } from "@/hooks/use-pagination";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import {
@@ -310,31 +313,50 @@ export default function Resources() {
   // Rendering
   // ---------------------------
   return (
-    <div className="min-h-screen bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <Book className="mx-auto h-16 w-16 text-primary" />
-          <h2 className="mt-2 text-4xl font-bold text-primary">
-            Learning Resources
-          </h2>
-          <p className="mt-2 text-xl text-muted-foreground">
-            Explore and share educational materials to enhance your learning
-            journey
-          </p>
+        {/* Page Header with animated background */}
+        <div className="relative py-16 px-4 sm:px-6 lg:px-8 mb-12 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+          {/* Animated grid background */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+          </div>
+
+          <div className="relative z-10 text-center">
+            <Book className="mx-auto h-16 w-16 text-purple-400" />
+            <h2 className="mt-2 text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-300 to-blue-400">
+              Learning Resources
+            </h2>
+            <p className="mt-2 text-xl text-gray-300 max-w-2xl mx-auto">
+              Explore and share educational materials to enhance your learning
+              journey
+            </p>
+          </div>
         </div>
 
         {/* Search, Bookmarks, and Upload Button */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search resources..."
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="relative w-full sm:w-auto flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search resources..."
+              className="pl-10 bg-gray-800/50 border-gray-700 text-gray-100 placeholder:text-gray-400 focus:ring-purple-500 focus:border-purple-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
             <Button
               variant={showBookmarked ? "default" : "outline"}
               onClick={() => setShowBookmarked(!showBookmarked)}
+              className={
+                showBookmarked
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "border-gray-600 text-gray-900"
+              }
             >
               {showBookmarked ? (
                 <BookmarkCheck className="h-4 w-4 mr-2" />
@@ -347,21 +369,25 @@ export default function Resources() {
             {/* Dialog for uploading a new resource */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Resource
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Resource
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="bg-gray-800 border-gray-700 text-gray-100">
                 <DialogHeader>
-                  <DialogTitle>Upload New Resource</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-gray-100">
+                    Upload New Resource
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-400">
                     Share your knowledge by uploading a PDF resource.
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name" className="text-gray-300">
+                      Name
+                    </Label>
                     <Input
                       id="name"
                       required
@@ -369,10 +395,13 @@ export default function Resources() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
+                      className="bg-gray-700/50 border-gray-600 text-gray-100"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className="text-gray-300">
+                      Description
+                    </Label>
                     <Textarea
                       id="description"
                       required
@@ -384,28 +413,39 @@ export default function Resources() {
                         })
                       }
                       rows={3}
+                      className="bg-gray-700/50 border-gray-600 text-gray-100"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="file">PDF File</Label>
+                    <Label htmlFor="file" className="text-gray-300">
+                      PDF File
+                    </Label>
                     <Input
                       id="file"
                       type="file"
                       accept=".pdf"
                       required
                       onChange={(e) => handleFileChange(e, "file")}
+                      className="bg-gray-700/50 border-gray-600 text-gray-100"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="thumbnail">Thumbnail (optional)</Label>
+                    <Label htmlFor="thumbnail" className="text-gray-300">
+                      Thumbnail (optional)
+                    </Label>
                     <Input
                       id="thumbnail"
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleFileChange(e, "thumbnail")}
+                      className="bg-gray-700/50 border-gray-600 text-gray-100"
                     />
                   </div>
-                  <Button type="submit" disabled={uploading} className="w-full">
+                  <Button
+                    type="submit"
+                    disabled={uploading}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
                     {uploading ? "Uploading..." : "Upload"}
                   </Button>
                 </form>
@@ -421,16 +461,19 @@ export default function Resources() {
             {Array(6)
               .fill(0)
               .map((_, i) => (
-                <Card key={i} className="animate-pulse bg-gray-100">
+                <Card
+                  key={i}
+                  className="animate-pulse bg-gray-800/50 border-gray-700"
+                >
                   <CardHeader>
-                    <div className="h-48 bg-gray-200 rounded-md mb-4" />
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    <div className="h-48 bg-gray-700/50 rounded-md mb-4" />
+                    <div className="h-6 bg-gray-700/50 rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-gray-700/50 rounded w-1/2" />
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <div className="h-8 bg-gray-200 rounded"></div>
-                      <div className="h-8 bg-gray-200 rounded"></div>
+                      <div className="h-8 bg-gray-700/50 rounded"></div>
+                      <div className="h-8 bg-gray-700/50 rounded"></div>
                     </div>
                   </CardContent>
                 </Card>
@@ -438,15 +481,15 @@ export default function Resources() {
           </div>
         ) : filteredResources.length === 0 ? (
           // No resources found
-          <Card className="text-center p-8 bg-gray-100">
+          <Card className="text-center p-8 bg-gray-800/30 border-gray-700">
             <CardContent>
-              <Book className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-xl text-muted-foreground">
+              <Book className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-xl text-gray-300">
                 {showBookmarked
                   ? "No bookmarked resources found"
                   : "No resources found"}
               </p>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-gray-400">
                 {showBookmarked
                   ? "Bookmark some resources to see them here"
                   : "Try a different search term or upload a new resource"}
@@ -458,21 +501,24 @@ export default function Resources() {
           <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {currentItems.map((resource) => (
-                <Card key={resource.id} className="bg-gray-100">
+                <Card
+                  key={resource.id}
+                  className="bg-gray-800/30 backdrop-blur-sm border-gray-700 hover:shadow-[0_0_15px_rgba(168,85,247,0.15)] transition-all duration-300"
+                >
                   <CardHeader>
                     {/* Title and Bookmark icon */}
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-primary truncate pr-8">
+                      <CardTitle className="text-gray-100 truncate pr-8">
                         {resource.name}
                       </CardTitle>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 text-gray-300 hover:text-purple-400 hover:bg-transparent"
                         onClick={() => toggleBookmark(resource.id)}
                       >
                         {isBookmarked(resource.id) ? (
-                          <BookmarkCheck className="h-5 w-5" />
+                          <BookmarkCheck className="h-5 w-5 text-purple-400" />
                         ) : (
                           <Bookmark className="h-5 w-5" />
                         )}
@@ -480,27 +526,29 @@ export default function Resources() {
                     </div>
 
                     {/* Thumbnail or generated thumbnail */}
-                    <div className="aspect-w-16 aspect-h-9 mb-4">
+                    <div className="aspect-w-16 aspect-h-9 mb-4 mt-2">
                       {resource.thumbnail_url ? (
                         <img
-                          src={resource.thumbnail_url}
+                          src={resource.thumbnail_url || "/placeholder.svg"}
                           alt={resource.name}
                           className="w-full h-48 object-cover rounded-md"
                         />
                       ) : thumbnails[resource.id] ? (
                         <img
-                          src={thumbnails[resource.id]}
+                          src={thumbnails[resource.id] || "/placeholder.svg"}
                           alt={resource.name}
                           className="w-full h-48 object-cover rounded-md"
                         />
                       ) : (
-                        <div className="w-full h-48 bg-muted flex items-center justify-center rounded-md">
-                          <Book className="h-12 w-12 text-muted-foreground" />
+                        <div className="w-full h-48 bg-gray-700/50 flex items-center justify-center rounded-md">
+                          <Book className="h-12 w-12 text-gray-500" />
                         </div>
                       )}
                     </div>
 
-                    <CardDescription>{resource.description}</CardDescription>
+                    <CardDescription className="text-gray-400">
+                      {resource.description}
+                    </CardDescription>
                   </CardHeader>
 
                   <CardContent>
@@ -508,20 +556,24 @@ export default function Resources() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                         <Button
                           onClick={() => handlePdfAction(resource, "chat")}
-                          className="flex-1"
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                         >
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Chat with PDF
                         </Button>
                         <Button
                           onClick={() => handlePdfAction(resource, "quiz")}
-                          className="flex-1"
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                         >
                           <Brain className="h-4 w-4 mr-2" />
                           Generate Quiz
                         </Button>
                       </div>
-                      <Button variant="outline" asChild className="w-full">
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="w-full border-gray-600 text-gray-900 hover:text-purple-400"
+                      >
                         <a
                           href={resource.file_url}
                           target="_blank"
@@ -544,10 +596,13 @@ export default function Resources() {
                   <PaginationContent className="flex">
                     {/* Previous Button */}
                     <PaginationItem>
-                      <PaginationPrevious onClick={previousPage} />
+                      <PaginationPrevious
+                        onClick={previousPage}
+                        className="text-gray-300 hover:text-purple-400 border-gray-700 hover:border-purple-400"
+                      />
                     </PaginationItem>
 
-                    {/* Pages with Ellipsis (show max 3 page numbers: first, current, last) */}
+                    {/* Pages with Ellipsis */}
                     {(() => {
                       const pagesToShow = [];
 
@@ -588,7 +643,7 @@ export default function Resources() {
                           return (
                             //@ts-ignore
                             <PaginationItem key={`dots-${index}`} disabled>
-                              <span className="px-2">...</span>
+                              <span className="px-2 text-gray-400">...</span>
                             </PaginationItem>
                           );
                         }
@@ -599,6 +654,11 @@ export default function Resources() {
                               //@ts-ignore
                               onClick={() => goToPage(page)}
                               isActive={currentPage === page}
+                              className={
+                                currentPage === page
+                                  ? "bg-purple-600 text-white border-purple-600"
+                                  : "text-gray-300 border-gray-700 hover:text-purple-400 hover:border-purple-400"
+                              }
                             >
                               {page}
                             </PaginationLink>
@@ -609,7 +669,10 @@ export default function Resources() {
 
                     {/* Next Button */}
                     <PaginationItem>
-                      <PaginationNext onClick={nextPage} />
+                      <PaginationNext
+                        onClick={nextPage}
+                        className="text-gray-300 hover:text-purple-400 border-gray-700 hover:border-purple-400"
+                      />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
