@@ -16,7 +16,7 @@ import {
   generateChapterContent,
 } from "../services/groq";
 import type { Course, Chapter } from "../types/course";
-import StarRating from "@/components/StarRating"; // Adjust import path
+import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,9 +35,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SearchBar } from "@/components/SearchBar"; // Adjust import path
-import { usePagination } from "@/hooks/use-pagination"; // Adjust import path
-import { useBookmarks } from "@/hooks/use-bookmarks"; // Adjust import path
+import { SearchBar } from "@/components/SearchBar";
+import { usePagination } from "@/hooks/use-pagination";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 import {
   Pagination,
   PaginationContent,
@@ -45,7 +45,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"; // Adjust import path
+} from "@/components/ui/pagination";
 
 interface CourseWithRating extends Course {
   average_rating?: number;
@@ -75,6 +75,7 @@ export default function Courses() {
   const [ratingLoading, setRatingLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarked, setShowBookmarked] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const chaptersRef = useRef<HTMLDivElement | null>(null);
 
@@ -122,7 +123,6 @@ export default function Courses() {
     }
 
     // Apply bookmark filter
-
     if (showBookmarked) {
       //@ts-ignore
       newFiltered = newFiltered.filter((course) => isBookmarked(course.id));
@@ -266,6 +266,8 @@ export default function Courses() {
 
     try {
       setGenerating(true);
+      setError(null);
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -274,12 +276,25 @@ export default function Courses() {
       // Generate outline via your service
       const outline = await generateCourseOutline(topic);
 
-      // Insert course
+      // Validate outline structure
+      if (!outline || typeof outline !== "object") {
+        throw new Error("Failed to generate course outline");
+      }
+
+      // Use a fallback title if the generated one is invalid
+      const courseTitle =
+        outline.title &&
+        typeof outline.title === "string" &&
+        outline.title.trim()
+          ? outline.title.trim()
+          : `Course: ${topic}`;
+
+      // Insert course with validated title
       const { data: newCourse, error: courseError } = await supabase
         .from("courses")
         .insert({
-          title: outline.title,
-          description: outline.description,
+          title: courseTitle,
+          description: outline.description || `Course about ${topic}`,
           user_id: user.id,
         })
         .select()
@@ -288,27 +303,38 @@ export default function Courses() {
       if (courseError) throw courseError;
 
       // Insert chapters based on the generated outline
-      const chaptersPromises = outline.chapters.map(async (chapterOutline) => {
-        const content = await generateChapterContent(
-          outline.title,
-          chapterOutline.title,
-          chapterOutline.description
+      if (Array.isArray(outline.chapters)) {
+        const chaptersPromises = outline.chapters.map(
+          async (chapterOutline, index) => {
+            // Use a fallback title for chapters as well
+            const chapterTitle =
+              chapterOutline.title?.trim() || `Chapter ${index + 1}`;
+
+            const content = await generateChapterContent(
+              courseTitle,
+              chapterTitle,
+              chapterOutline.description || ""
+            );
+
+            return supabase.from("chapters").insert({
+              course_id: newCourse.id,
+              title: chapterTitle,
+              content,
+              order_index: chapterOutline.order_index || index,
+            });
+          }
         );
 
-        return supabase.from("chapters").insert({
-          course_id: newCourse.id,
-          title: chapterOutline.title,
-          content,
-          order_index: chapterOutline.order_index,
-        });
-      });
-
-      await Promise.all(chaptersPromises);
+        await Promise.all(chaptersPromises);
+      }
 
       setTopic("");
       fetchCourses();
     } catch (error) {
       console.error("Error creating course:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to create course"
+      );
     } finally {
       setGenerating(false);
     }
@@ -381,6 +407,9 @@ export default function Courses() {
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                       />
+                      {error && (
+                        <p className="text-sm text-red-500 mt-1">{error}</p>
+                      )}
                     </div>
                     <Button
                       onClick={handleCreateCourse}
@@ -484,6 +513,9 @@ export default function Courses() {
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
                     />
+                    {error && (
+                      <p className="text-sm text-red-500 mt-1">{error}</p>
+                    )}
                   </div>
                   <Button
                     onClick={handleCreateCourse}
