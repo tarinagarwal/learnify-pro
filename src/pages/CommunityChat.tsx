@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { ArrowLeft, Send, ThumbsUp, ThumbsDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -224,36 +232,36 @@ export default function CommunityChat() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-950 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate("/community")}
-            className="mb-4"
+            className="mb-4 text-gray-300 hover:text-white hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Communities
           </Button>
 
-          <Card>
+          <Card className="bg-gray-800/50 border-b border-gray-700 text-white">
             <CardHeader>
-              <CardTitle>{community?.title}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">
+              <CardTitle className="text-white">{community?.title}</CardTitle>
+              <p className="text-sm text-gray-400 mt-2">
                 {community?.description}
               </p>
               <div className="flex flex-wrap gap-2 mt-2">
                 {community?.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
+                    className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs"
                   >
                     {tag}
                   </span>
@@ -263,49 +271,61 @@ export default function CommunityChat() {
           </Card>
         </div>
 
-        <Card className="mb-4">
+        <Card className="mb-4 bg-gray-800/50 border-b border-gray-700">
           <CardContent className="p-0">
             <ScrollArea className="h-[500px] p-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div key={message.id} className="flex flex-col space-y-2">
-                    <div className="flex justify-between items-start">
-                      <span className="font-medium text-sm">
-                        {message.user.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(message.created_at).toLocaleString()}
-                      </span>
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <MessageSquare className="h-12 w-12 text-gray-500 mb-4" />
+                  <p className="text-gray-400">
+                    No messages yet. Be the first to start the conversation!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className="flex flex-col space-y-2 p-3 rounded-lg bg-gray-900/50 backdrop-blur-sm"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="font-medium text-sm text-purple-400">
+                          {message.user.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(message.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-300">{message.content}</p>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handleVote(message.id, "upvote")}
+                          className={`flex items-center gap-1 ${
+                            message.userVote === "upvote"
+                              ? "text-green-400"
+                              : "text-gray-500 hover:text-gray-300"
+                          }`}
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                          <span className="text-xs">{message.upvotes}</span>
+                        </button>
+                        <button
+                          onClick={() => handleVote(message.id, "downvote")}
+                          className={`flex items-center gap-1 ${
+                            message.userVote === "downvote"
+                              ? "text-red-400"
+                              : "text-gray-500 hover:text-gray-300"
+                          }`}
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                          <span className="text-xs">{message.downvotes}</span>
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-sm">{message.content}</p>
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleVote(message.id, "upvote")}
-                        className={`flex items-center gap-1 ${
-                          message.userVote === "upvote"
-                            ? "text-green-600"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        <ThumbsUp className="h-4 w-4" />
-                        <span className="text-xs">{message.upvotes}</span>
-                      </button>
-                      <button
-                        onClick={() => handleVote(message.id, "downvote")}
-                        className={`flex items-center gap-1 ${
-                          message.userVote === "downvote"
-                            ? "text-red-600"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        <ThumbsDown className="h-4 w-4" />
-                        <span className="text-xs">{message.downvotes}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
             </ScrollArea>
           </CardContent>
         </Card>
@@ -315,6 +335,7 @@ export default function CommunityChat() {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
+            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
             onKeyPress={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -322,7 +343,11 @@ export default function CommunityChat() {
               }
             }}
           />
-          <Button onClick={sendMessage} disabled={!newMessage.trim()}>
+          <Button
+            onClick={sendMessage}
+            disabled={!newMessage.trim()}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>

@@ -186,7 +186,7 @@ export default function Navbar() {
         { to: "/dashboard", icon: LayoutDashboard, label: "Notebooks" },
         { to: "/pdf-chat", icon: MessageSquare, label: "PDF Chat" },
         { to: "/quiz", icon: LucideMessageCircleQuestion, label: "Quiz" },
-        { to: "/history", icon: History, label: "History" },
+        { to: "/history", icon: History, label: "Quiz History" },
       ],
     },
     {
