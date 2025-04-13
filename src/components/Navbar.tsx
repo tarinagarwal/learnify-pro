@@ -16,6 +16,7 @@ import {
   UserPlus,
   LayoutDashboard,
   LucideMessageCircleQuestion,
+  Route,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -190,6 +191,9 @@ export default function Navbar() {
                 <NavLink to="/community" icon={GraduationCap}>
                   Community
                 </NavLink>
+                <NavLink to="/roadmaps" icon={Route}>
+                  Roadmaps
+                </NavLink>
               </div>
 
               {/* USER DROPDOWN & MOBILE MENU TOGGLE */}
@@ -291,6 +295,9 @@ export default function Navbar() {
                       <NavLink to="/community" icon={GraduationCap}>
                         Community
                       </NavLink>
+                      <NavLink to="/roadmaps" icon={Route}>
+                        Roadmaps
+                      </NavLink>
                       <Button variant="outline" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Log out
@@ -306,7 +313,9 @@ export default function Navbar() {
               <Button variant="ghost" asChild className="px-2 sm:px-4">
                 <Link to="/login" className="flex items-center">
                   <LogIn className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline bg-white px-10 py-2 rounded-xl">Login</span>
+                  <span className="hidden sm:inline bg-white px-10 py-2 rounded-xl">
+                    Login
+                  </span>
                 </Link>
               </Button>
               <Button asChild className="px-2 sm:px-4">

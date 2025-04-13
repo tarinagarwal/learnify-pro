@@ -17,6 +17,7 @@ import { History as BlackboardHistory } from "./pages/BlackboardHistory";
 import { Whiteboard } from "./components/Whiteboard";
 import Community from "./pages/Community";
 import CommunityChat from "./pages/CommunityChat";
+import Roadmaps from "./pages/Roadmaps";
 
 function App() {
   return (
@@ -123,6 +124,15 @@ function App() {
             }
           />
         </Route>
+
+        <Route
+          path="/roadmaps"
+          element={
+            <AuthGuard>
+              <Roadmaps />
+            </AuthGuard>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

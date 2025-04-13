@@ -5,10 +5,8 @@ import {
   Plus,
   ChevronRight,
   Loader2,
-  Search,
-  BookmarkCheck,
   Bookmark,
-  BookIcon,
+  BookmarkCheck,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import {
@@ -21,14 +19,14 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -46,6 +44,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CourseWithRating extends Course {
   average_rating?: number;
@@ -59,9 +58,7 @@ const ITEMS_PER_PAGE = 6;
 export default function Courses() {
   const navigate = useNavigate();
 
-  // ---------------------------
   // State variables
-  // ---------------------------
   const [courses, setCourses] = useState<CourseWithRating[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseWithRating[]>(
     []
@@ -76,12 +73,11 @@ export default function Courses() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarked, setShowBookmarked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("all"); // "all" | "my-courses"
 
   const chaptersRef = useRef<HTMLDivElement | null>(null);
 
-  // ---------------------------
   // Hooks for pagination/bookmarks
-  // ---------------------------
   const {
     bookmarks,
     loading: bookmarksLoading,
@@ -102,64 +98,62 @@ export default function Courses() {
     itemsPerPage: ITEMS_PER_PAGE,
   });
 
-  // ---------------------------
   // Effects
-  // ---------------------------
   useEffect(() => {
     fetchCourses();
-  }, []);
+  }, [activeTab]);
 
-  // Filter courses by search or bookmarked status
   useEffect(() => {
-    let newFiltered = courses;
+    let filtered = courses;
 
-    // Apply search filter (by title or description)
+    // Apply search filter
     if (searchQuery) {
-      newFiltered = newFiltered.filter(
+      filtered = filtered.filter(
         (course) =>
           course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply bookmark filter
+    // Apply bookmarks filter
     if (showBookmarked) {
-      //@ts-ignore
-      newFiltered = newFiltered.filter((course) => isBookmarked(course.id));
+      filtered = filtered.filter((course) => isBookmarked(course.id));
     }
 
-    setFilteredCourses(newFiltered);
+    setFilteredCourses(filtered);
   }, [courses, searchQuery, showBookmarked, bookmarks, isBookmarked]);
 
-  // ---------------------------
-  // Supabase queries
-  // ---------------------------
+  // Fetch courses based on active tab
   const fetchCourses = async () => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      if (!user) return;
 
       setLoading(true);
 
-      // Fetch all courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("courses").select("*");
+
+      // Filter by user_id if on "my-courses" tab
+      if (activeTab === "my-courses") {
+        query = query.eq("user_id", user.id);
+      }
+
+      const { data: coursesData, error: coursesError } = await query.order(
+        "created_at",
+        { ascending: false }
+      );
 
       if (coursesError) throw coursesError;
 
       // For each course, get average rating, total ratings, and user's rating
       const coursesWithRatings: CourseWithRating[] = await Promise.all(
         (coursesData || []).map(async (course) => {
-          // average rating + total ratings
           const { data: ratingData } = await supabase.rpc("get_course_rating", {
             course_uuid: course.id,
           });
 
-          // user rating (use maybeSingle for safety)
           const { data: userRating } = await supabase
             .from("course_ratings")
             .select("rating")
@@ -202,15 +196,10 @@ export default function Courses() {
     }
   };
 
-  // ---------------------------
-  // Handlers
-  // ---------------------------
   const handleCourseClick = async (course: CourseWithRating) => {
-    // Fetch chapters for this course
     const courseChapters = await fetchChaptersForCourse(course);
     setSelectedCourse({ ...course, chapters: courseChapters });
 
-    // Scroll to the chapters section
     setTimeout(() => {
       chaptersRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 0);
@@ -224,7 +213,6 @@ export default function Courses() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Upsert rating
       const { error } = await supabase.from("course_ratings").upsert(
         {
           course_id: courseId,
@@ -238,10 +226,8 @@ export default function Courses() {
 
       if (error) throw error;
 
-      // Refresh courses to update average rating & user rating
       await fetchCourses();
 
-      // If the currently selected course is the same, refetch its chapters
       if (selectedCourse?.id === courseId) {
         const updatedChapters = await fetchChaptersForCourse(selectedCourse);
         setSelectedCourse((prev) =>
@@ -273,15 +259,12 @@ export default function Courses() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Generate outline via your service
       const outline = await generateCourseOutline(topic);
 
-      // Validate outline structure
       if (!outline || typeof outline !== "object") {
         throw new Error("Failed to generate course outline");
       }
 
-      // Use a fallback title if the generated one is invalid
       const courseTitle =
         outline.title &&
         typeof outline.title === "string" &&
@@ -289,7 +272,6 @@ export default function Courses() {
           ? outline.title.trim()
           : `Course: ${topic}`;
 
-      // Insert course with validated title
       const { data: newCourse, error: courseError } = await supabase
         .from("courses")
         .insert({
@@ -302,11 +284,9 @@ export default function Courses() {
 
       if (courseError) throw courseError;
 
-      // Insert chapters based on the generated outline
       if (Array.isArray(outline.chapters)) {
         const chaptersPromises = outline.chapters.map(
           async (chapterOutline, index) => {
-            // Use a fallback title for chapters as well
             const chapterTitle =
               chapterOutline.title?.trim() || `Chapter ${index + 1}`;
 
@@ -348,10 +328,6 @@ export default function Courses() {
     }
   };
 
-  // ---------------------------
-  // Rendering
-  // ---------------------------
-  // If still loading courses or bookmarks, show skeleton
   if (loading || bookmarksLoading) {
     return (
       <div className="min-h-screen bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
@@ -360,20 +336,59 @@ export default function Courses() {
             <Book className="mx-auto h-16 w-16 text-primary" />
             <h2 className="mt-2 text-4xl font-bold text-primary">Courses</h2>
             <p className="mt-2 text-xl text-muted-foreground">
-              Expand your knowledge with our interactive courses
+              Expand your knowledge with interactive courses
             </p>
           </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array(6)
+              .fill(0)
+              .map((_, i) => (
+                <Card key={i} className="animate-pulse bg-gray-100">
+                  <CardHeader>
+                    <div className="h-48 bg-gray-200 rounded-md mb-4" />
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="h-8 bg-gray-200 rounded" />
+                      <div className="h-8 bg-gray-200 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          {/* Search and Bookmark Toggles */}
+  return (
+    <div className="min-h-screen bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-12">
+          <Book className="mx-auto h-16 w-16 text-primary" />
+          <h2 className="mt-2 text-4xl font-bold text-primary">Courses</h2>
+          <p className="mt-2 text-xl text-muted-foreground">
+            Expand your knowledge with interactive courses
+          </p>
+        </div>
+
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
           <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search courses..."
-            />
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search courses..."
+              />
+              <TabsList>
+                <TabsTrigger value="all">All Courses</TabsTrigger>
+                <TabsTrigger value="my-courses">My Courses</TabsTrigger>
+              </TabsList>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {/* Bookmark toggle */}
               <Button
                 variant={showBookmarked ? "default" : "outline"}
                 onClick={() => setShowBookmarked(!showBookmarked)}
@@ -386,7 +401,6 @@ export default function Courses() {
                 {showBookmarked ? "Show All" : "Show Bookmarked"}
               </Button>
 
-              {/* Create Course Dialog */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button>
@@ -397,6 +411,9 @@ export default function Courses() {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Create New Course</DialogTitle>
+                    <DialogDescription>
+                      Generate a comprehensive course on any topic.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -430,273 +447,194 @@ export default function Courses() {
               </Dialog>
             </div>
           </div>
-          {/* Skeleton Cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {Array(6)
-              .fill(0)
-              .map((_, i) => (
-                <Card key={i} className="animate-pulse bg-gray-100">
-                  <CardHeader>
-                    {/* Large placeholder (thumbnail-like) */}
-                    <div className="h-48 bg-gray-200 rounded-md mb-4" />
-                    {/* Title placeholder */}
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-                    {/* Subtitle placeholder */}
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-8 bg-gray-200 rounded" />
-                      <div className="h-8 bg-gray-200 rounded" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <Book className="mx-auto h-16 w-16 text-primary" />
-          <h2 className="mt-2 text-4xl font-bold text-primary">Courses</h2>
-          <p className="mt-2 text-xl text-muted-foreground">
-            Expand your knowledge with our interactive courses
-          </p>
-        </div>
-
-        {/* Search and Bookmark Toggles */}
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search courses..."
-          />
-
-          <div className="flex gap-2">
-            {/* Bookmark toggle */}
-            <Button
-              variant={showBookmarked ? "default" : "outline"}
-              onClick={() => setShowBookmarked(!showBookmarked)}
-            >
-              {showBookmarked ? (
-                <BookmarkCheck className="h-4 w-4 mr-2" />
-              ) : (
-                <Bookmark className="h-4 w-4 mr-2" />
-              )}
-              {showBookmarked ? "Show All" : "Show Bookmarked"}
-            </Button>
-
-            {/* Create Course Dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Course
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Course</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="topic">Course Topic</Label>
-                    <Input
-                      id="topic"
-                      placeholder="Enter a topic for the course"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                    />
-                    {error && (
-                      <p className="text-sm text-red-500 mt-1">{error}</p>
-                    )}
-                  </div>
-                  <Button
-                    onClick={handleCreateCourse}
-                    disabled={generating || !topic.trim()}
-                    className="w-full"
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating Course...
-                      </>
-                    ) : (
-                      "Create Course"
-                    )}
-                  </Button>
+          <TabsContent value="all">
+            {filteredCourses.length === 0 ? (
+              <Card className="text-center p-8 bg-gray-100">
+                <CardContent>
+                  <Book className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-xl text-muted-foreground">
+                    {showBookmarked
+                      ? "No bookmarked courses found"
+                      : "No courses found"}
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    {showBookmarked
+                      ? "Bookmark some courses to see them here"
+                      : "Try a different search term or create a new course"}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {currentItems.map((course) => (
+                    <Card
+                      key={course.id}
+                      onClick={() => handleCourseClick(course)}
+                      className={`transition-shadow bg-gray-100 hover:shadow-lg flex flex-col cursor-pointer ${
+                        selectedCourse?.id === course.id
+                          ? "ring-2 ring-primary"
+                          : ""
+                      }`}
+                    >
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle>{course.title}</CardTitle>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookmark(course.id);
+                            }}
+                          >
+                            {isBookmarked(course.id) ? (
+                              <BookmarkCheck className="h-5 w-5" />
+                            ) : (
+                              <Bookmark className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </div>
+                        <CardDescription>{course.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="mt-auto">
+                        <StarRating
+                          rating={course.average_rating || 0}
+                          totalRatings={course.total_ratings || 0}
+                          userRating={course.user_rating}
+                          onRate={(r) => handleRating(course.id, r)}
+                          loading={ratingLoading === course.id}
+                        />
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
 
-        {/* Main Content */}
-        {filteredCourses.length === 0 ? (
-          /* No courses (or no bookmarked courses) found */
-          <Card className="text-center p-8 bg-gray-100">
-            <CardContent>
-              <Book className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-xl text-muted-foreground">
-                {showBookmarked
-                  ? "No bookmarked courses found"
-                  : "No courses found"}
-              </p>
-              <p className="mt-2 text-muted-foreground">
-                {showBookmarked
-                  ? "Bookmark some courses to see them here"
-                  : "Try a different search term or create a new course"}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* List of Courses (paginated) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentItems.map((course) => (
-                <Card
-                  key={course.id}
-                  onClick={() => handleCourseClick(course)}
-                  className={`transition-shadow bg-gray-100 hover:shadow-lg flex flex-col cursor-pointer ${
-                    selectedCourse?.id === course.id
-                      ? "ring-2 ring-primary"
-                      : ""
-                  }`}
-                >
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle>{course.title}</CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          // Prevent the card click from firing
-                          e.stopPropagation();
-                          //@ts-ignore
-                          toggleBookmark(course.id);
-                        }}
-                      >
-                        {isBookmarked(
-                          //@ts-ignore
-                          course.id
-                        ) ? (
-                          <BookmarkCheck className="h-5 w-5" />
-                        ) : (
-                          <Bookmark className="h-5 w-5" />
-                        )}
-                      </Button>
-                    </div>
-                    <CardDescription>{course.description}</CardDescription>
-                  </CardHeader>
-                  <CardFooter className="flex flex-col gap-2 mt-auto">
-                    <StarRating
-                      rating={course.average_rating || 0}
-                      totalRatings={course.total_ratings || 0}
-                      userRating={course.user_rating}
-                      onRate={(r) =>
-                        handleRating(
-                          //@ts-ignore
-                          course.id,
-                          r
-                        )
-                      }
-                      //@ts-ignore
-                      loading={ratingLoading === course.id}
-                    />
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+                {totalPages > 1 && (
+                  <div className="mt-8 overflow-x-auto whitespace-nowrap">
+                    <Pagination className="inline-flex items-center gap-2">
+                      <PaginationContent className="flex">
+                        <PaginationItem>
+                          <PaginationPrevious onClick={previousPage} />
+                        </PaginationItem>
+                        {(() => {
+                          const pagesToShow = [];
 
-            {/* Pagination controls */}
-            {totalPages > 1 && (
-              <div className="mt-8 overflow-x-auto whitespace-nowrap">
-                <Pagination className="inline-flex items-center gap-2">
-                  <PaginationContent className="flex">
-                    {/* Previous Button */}
-                    <PaginationItem>
-                      <PaginationPrevious onClick={previousPage} />
-                    </PaginationItem>
+                          if (totalPages <= 3) {
+                            for (let i = 1; i <= totalPages; i++) {
+                              pagesToShow.push(i);
+                            }
+                          } else {
+                            pagesToShow.push(1);
+                            if (currentPage > 2) {
+                              pagesToShow.push("...");
+                            }
+                            if (currentPage > 1 && currentPage < totalPages) {
+                              pagesToShow.push(currentPage);
+                            }
+                            if (currentPage < totalPages - 1) {
+                              pagesToShow.push("...");
+                            }
+                            if (totalPages !== 1) {
+                              pagesToShow.push(totalPages);
+                            }
+                          }
 
-                    {/* Pages with Ellipsis (show max 3 page numbers: first, current, last) */}
-                    {(() => {
-                      const pagesToShow = [];
+                          return pagesToShow.map((page, index) => {
+                            if (page === "...") {
+                              return (
+                                <PaginationItem key={`dots-${index}`} disabled>
+                                  <span className="px-2">...</span>
+                                </PaginationItem>
+                              );
+                            }
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => goToPage(page)}
+                                  isActive={currentPage === page}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          });
+                        })()}
+                        <PaginationItem>
+                          <PaginationNext onClick={nextPage} />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
 
-                      if (totalPages <= 3) {
-                        // If there are 3 or fewer pages, show them all directly
-                        for (let i = 1; i <= totalPages; i++) {
-                          pagesToShow.push(i);
-                        }
-                      } else {
-                        // Always show first page
-                        pagesToShow.push(1);
-
-                        // If currentPage is greater than 2, we have a gap -> add ellipsis
-                        if (currentPage > 2) {
-                          pagesToShow.push("...");
-                        }
-
-                        // If current is neither the first nor the last, show it
-                        if (currentPage > 1 && currentPage < totalPages) {
-                          pagesToShow.push(currentPage);
-                        }
-
-                        // If currentPage is at least 2 less than totalPages, we have a gap -> add ellipsis
-                        if (currentPage < totalPages - 1) {
-                          pagesToShow.push("...");
-                        }
-
-                        // Always show last page (unless totalPages is 1, but we have the check above)
-                        if (totalPages !== 1) {
-                          pagesToShow.push(totalPages);
-                        }
-                      }
-
-                      // Render pages or ellipses
-                      return pagesToShow.map((page, index) => {
-                        if (page === "...") {
-                          // Render ellipses
-                          return (
-                            //@ts-ignore
-                            <PaginationItem key={`dots-${index}`} disabled>
-                              <span className="px-2">...</span>
-                            </PaginationItem>
-                          );
-                        }
-                        // Render normal page number
-                        return (
-                          <PaginationItem key={page}>
-                            <PaginationLink
-                              //@ts-ignore
-                              onClick={() => goToPage(page)}
-                              isActive={currentPage === page}
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        );
-                      });
-                    })()}
-
-                    {/* Next Button */}
-                    <PaginationItem>
-                      <PaginationNext onClick={nextPage} />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+          <TabsContent value="my-courses">
+            {filteredCourses.length === 0 ? (
+              <Card className="text-center p-8 bg-gray-100">
+                <CardContent>
+                  <Book className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-xl text-muted-foreground">
+                    No courses created yet
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    Create your first course to get started
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentItems.map((course) => (
+                  <Card
+                    key={course.id}
+                    onClick={() => handleCourseClick(course)}
+                    className={`transition-shadow bg-gray-100 hover:shadow-lg flex flex-col cursor-pointer ${
+                      selectedCourse?.id === course.id
+                        ? "ring-2 ring-primary"
+                        : ""
+                    }`}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <CardTitle>{course.title}</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleBookmark(course.id);
+                          }}
+                        >
+                          {isBookmarked(course.id) ? (
+                            <BookmarkCheck className="h-5 w-5" />
+                          ) : (
+                            <Bookmark className="h-5 w-5" />
+                          )}
+                        </Button>
+                      </div>
+                      <CardDescription>{course.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="mt-auto">
+                      <StarRating
+                        rating={course.average_rating || 0}
+                        totalRatings={course.total_ratings || 0}
+                        userRating={course.user_rating}
+                        onRate={(r) => handleRating(course.id, r)}
+                        loading={ratingLoading === course.id}
+                      />
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
-          </>
-        )}
+          </TabsContent>
+        </Tabs>
 
-        {/* If a course is selected, show its chapters */}
         {selectedCourse && (
           <Card className="mt-8 bg-gray-100" ref={chaptersRef}>
             <CardHeader>
@@ -710,7 +648,6 @@ export default function Courses() {
                   onRate={(r) =>
                     selectedCourse.id && handleRating(selectedCourse.id, r)
                   }
-                  //@ts-ignore
                   loading={ratingLoading === selectedCourse.id}
                 />
               </div>
