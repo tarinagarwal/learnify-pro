@@ -123,16 +123,15 @@ function App() {
               </AuthGuard>
             }
           />
+          <Route
+            path="/roadmaps"
+            element={
+              <AuthGuard>
+                <Roadmaps />
+              </AuthGuard>
+            }
+          />
         </Route>
-
-        <Route
-          path="/roadmaps"
-          element={
-            <AuthGuard>
-              <Roadmaps />
-            </AuthGuard>
-          }
-        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 
 export default function Layout() {
@@ -9,32 +9,124 @@ export default function Layout() {
       <main className="flex-grow pt-16">
         <Outlet />
       </main>
-      <footer className="bg-black text-white py-6 px-4 sm:px-6 lg:px-8">
-        <div
-          className="max-w-7xl mx-auto flex flex-col items-center space-y-2 
-                  md:flex-row md:justify-between md:space-y-0 
-                  text-center "
-        >
-          {/* Copyright */}
-          <p>
-            &copy; {new Date().getFullYear()} Learnify. All rights reserved.
-          </p>
-
-          {/* Tarin Agarwal Link */}
-
-          {/* Star on Github Button */}
+      <footer className="bg-gray-950 text-gray-400 py-12 px-4">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <a
-              href="https://github.com/tarinagarwal/Learnify-pro"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center border border-gray-300 
-                   rounded-md px-4 py-2 bg-white hover:bg-white
-                   hover:text-gray-700 transition-colors text-black"
-            >
-              🌟 Star on Github
-            </a>
+            <h3 className="text-white text-lg font-semibold mb-4">Learnify</h3>
+            <p className="mb-4">
+              Transforming education through AI and interactive learning
+              experiences.
+            </p>
+            <div className="flex space-x-4">
+              {/* Social icons would go here */}
+            </div>
           </div>
+          <div>
+            <h3 className="text-white text-lg font-semibold mb-4">Features</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/quiz"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Interactive Quizzes
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/courses"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Courses
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/resources"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  PDF Tools
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/roadmaps"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Learning Roadmaps
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-lg font-semibold mb-4">Company</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/about"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/blog"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/careers"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-lg font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/terms"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/cookies"
+                  className="hover:text-purple-400 transition-colors"
+                >
+                  Cookie Policy
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto mt-8 pt-8 border-t border-gray-800 text-center">
+          <p>© {new Date().getFullYear()} Learnify. All rights reserved.</p>
         </div>
       </footer>
     </div>
