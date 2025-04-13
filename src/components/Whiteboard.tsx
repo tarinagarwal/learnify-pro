@@ -328,7 +328,7 @@ export const Whiteboard: React.FC = () => {
             </button>
             <button
               onClick={saveWhiteboard}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-md"
               disabled={loading}
             >
               <Save className="w-5 h-5" />

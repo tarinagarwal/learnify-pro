@@ -195,13 +195,13 @@ export const Notebook: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-200 mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <button
@@ -227,7 +227,7 @@ export const Notebook: React.FC = () => {
           </button>
           <button
             onClick={() => setShowNewBoardDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-md hover:bg-blue-700"
           >
             <Plus className="w-5 h-5" />
             Add Whiteboard
@@ -239,7 +239,7 @@ export const Notebook: React.FC = () => {
         {whiteboards.map((whiteboard, index) => (
           <div
             key={whiteboard.id}
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+            className="bg-gray-100 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
           >
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">

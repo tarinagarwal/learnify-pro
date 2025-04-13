@@ -9,7 +9,7 @@ export default function Layout() {
       <main className="flex-grow pt-16">
         <Outlet />
       </main>
-      <footer className="bg-black border text-white border-t-black py-6 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-black text-white py-6 px-4 sm:px-6 lg:px-8">
         <div
           className="max-w-7xl mx-auto flex flex-col items-center space-y-2 
                   md:flex-row md:justify-between md:space-y-0 
@@ -21,21 +21,11 @@ export default function Layout() {
           </p>
 
           {/* Tarin Agarwal Link */}
-          <div>
-            <a
-              href="https://tarin-agarwal.web.app/home"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline  hover:text-gray-600"
-            >
-              Tarin Agarwal
-            </a>
-          </div>
 
           {/* Star on Github Button */}
           <div>
             <a
-              href="https://github.com/tarinagarwal/Learnify"
+              href="https://github.com/tarinagarwal/Learnify-pro"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center border border-gray-300 
