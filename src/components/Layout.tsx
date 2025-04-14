@@ -74,7 +74,7 @@ export default function Layout() {
             </ul>
           </div>
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Company</h3>
+            <h3 className="text-white text-lg font-semibold mb-4">About</h3>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -107,6 +107,16 @@ export default function Layout() {
                 >
                   Contact
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://tarinagarwal.in/"
+                  className="hover:text-purple-400 transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Developer
+                </a>
               </li>
             </ul>
           </div>
