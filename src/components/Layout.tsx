@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 
+// ScrollToTop component remains unchanged.
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -9,11 +10,36 @@ function ScrollToTop() {
     window.scrollTo({
       top: 0,
       left: 0,
-      behavior: "smooth", // This enables smooth scrolling
+      behavior: "smooth",
     });
   }, [pathname]);
 
   return null;
+}
+
+// New ZapierChatBot component to load the Zapier script
+function ZapierChatBot() {
+  useEffect(() => {
+    const scriptId = "zapier-chatbot-script";
+    // Check if the script is already present to avoid duplicates (especially in React Strict Mode)
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src =
+        "https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js";
+      script.type = "module";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  // Render the custom Zapier chatbot element.
+  return (
+    <zapier-interfaces-chatbot-embed
+      is-popup="true"
+      chatbot-id="cm9h89phh000btkr290tpjkcg"
+    ></zapier-interfaces-chatbot-embed>
+  );
 }
 
 export default function Layout() {
@@ -21,9 +47,15 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <ScrollToTop />
+
       <main className="flex-grow pt-16">
         <Outlet />
       </main>
+
+      {/* You can include the Zapier chatbot component anywhere in the layout.
+          Here, it is placed just before the footer so that it will be loaded on every page. */}
+      <ZapierChatBot />
+
       <footer className="bg-gray-950 border-t border-[#777696] text-gray-400 py-12 px-4">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -84,22 +116,6 @@ export default function Layout() {
                   About Us
                 </Link>
               </li>
-              {/* <li>
-                <Link
-                  to="/blog"
-                  className="hover:text-purple-400 transition-colors"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/careers"
-                  className="hover:text-purple-400 transition-colors"
-                >
-                  Careers
-                </Link>
-              </li> */}
               <li>
                 <Link
                   to="/contact"
