@@ -23,6 +23,7 @@ import AboutPage from "./pages/footer-links/about";
 import TermsPage from "./pages/footer-links/terms";
 import PrivacyPage from "./pages/footer-links/privacy";
 import CookiesPage from "./pages/footer-links/cookies";
+import QuizAnalytics from "./pages/QuizAnalytics";
 
 function App() {
   return (
@@ -37,6 +38,14 @@ function App() {
             element={
               <AuthGuard>
                 <Quiz />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/quiz-analytics/:id"
+            element={
+              <AuthGuard>
+                <QuizAnalytics />
               </AuthGuard>
             }
           />

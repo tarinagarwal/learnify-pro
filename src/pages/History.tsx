@@ -119,9 +119,13 @@ export default function History() {
     }
   };
 
-  // ---------------------------
-  // Skeleton Loading
-  // ---------------------------
+  const handleViewQuiz = (quiz: QuizHistory) => {
+    setSelectedQuiz({
+      ...quiz,
+      id: quiz.id,
+    });
+  };
+
   if (loading || bookmarksLoading) {
     return (
       <div className="min-h-screen bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
@@ -136,18 +140,14 @@ export default function History() {
             </p>
           </div>
 
-          {/* Skeleton Cards (6) */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array(6)
               .fill(0)
               .map((_, i) => (
                 <Card key={i} className="animate-pulse bg-gray-800 border-none">
                   <CardHeader>
-                    {/* "Thumbnail" placeholder */}
                     <div className="h-48 bg-gray-700 rounded-md mb-4" />
-                    {/* Title placeholder */}
                     <div className="h-6 bg-gray-700 rounded w-3/4 mb-2" />
-                    {/* Subtitle placeholder */}
                     <div className="h-4 bg-gray-700 rounded w-1/2" />
                   </CardHeader>
                   <CardContent>
@@ -168,12 +168,10 @@ export default function History() {
     <div className="min-h-screen bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="relative py-16 px-4 sm:px-6 lg:px-8 mb-12 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-purple-900/30">
-          {/* Animated grid background */}
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-[linear-gradient(45deg,#ffffff0a_1px,transparent_1px),linear-gradient(135deg,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px]" />
           </div>
 
-          {/* Animated particles */}
           <div className="absolute inset-0 opacity-30">
             {[...Array(10)].map((_, i) => (
               <div
@@ -220,7 +218,6 @@ export default function History() {
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Search quizzes..."
-              //@ts-ignore
               className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
             />
           </div>
@@ -268,6 +265,7 @@ export default function History() {
                 userAnswers={selectedQuiz.answers}
                 onRestart={() => setSelectedQuiz(null)}
                 isHistoryView={true}
+                quizId={selectedQuiz.id}
               />
             </CardContent>
           </Card>
@@ -300,7 +298,7 @@ export default function History() {
                 <Card
                   key={quiz.id}
                   className=" bg-gray-800/50 border-b border-gray-700 hover:shadow-[0_0_15px_rgba(168,85,247,0.15)] transition-all duration-300 cursor-pointer text-white"
-                  onClick={() => setSelectedQuiz(quiz)}
+                  onClick={() => handleViewQuiz(quiz)}
                 >
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -361,7 +359,6 @@ export default function History() {
               <div className="mt-8 overflow-x-auto whitespace-nowrap">
                 <Pagination className="inline-flex items-center gap-2">
                   <PaginationContent className="flex">
-                    {/* Previous Button */}
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={previousPage}
@@ -369,56 +366,44 @@ export default function History() {
                       />
                     </PaginationItem>
 
-                    {/* Pages with Ellipsis */}
                     {(() => {
                       const pagesToShow = [];
 
                       if (totalPages <= 3) {
-                        // If there are 3 or fewer pages, show them all directly
                         for (let i = 1; i <= totalPages; i++) {
                           pagesToShow.push(i);
                         }
                       } else {
-                        // Always show first page
                         pagesToShow.push(1);
 
-                        // If currentPage is greater than 2, we have a gap -> add ellipsis
                         if (currentPage > 2) {
                           pagesToShow.push("...");
                         }
 
-                        // If current is neither the first nor the last, show it
                         if (currentPage > 1 && currentPage < totalPages) {
                           pagesToShow.push(currentPage);
                         }
 
-                        // If currentPage is at least 2 less than totalPages, we have a gap -> add ellipsis
                         if (currentPage < totalPages - 1) {
                           pagesToShow.push("...");
                         }
 
-                        // Always show last page (unless totalPages is 1, but we have the check above)
                         if (totalPages !== 1) {
                           pagesToShow.push(totalPages);
                         }
                       }
 
-                      // Render pages or ellipses
                       return pagesToShow.map((page, index) => {
                         if (page === "...") {
-                          // Render ellipses
                           return (
-                            //@ts-ignore
                             <PaginationItem key={`dots-${index}`} disabled>
                               <span className="px-2 text-gray-400">...</span>
                             </PaginationItem>
                           );
                         }
-                        // Render normal page number
                         return (
                           <PaginationItem key={page}>
                             <PaginationLink
-                              //@ts-ignore
                               onClick={() => goToPage(page)}
                               isActive={currentPage === page}
                               className={
@@ -434,7 +419,6 @@ export default function History() {
                       });
                     })()}
 
-                    {/* Next Button */}
                     <PaginationItem>
                       <PaginationNext
                         onClick={nextPage}

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Brain, Sparkles } from "lucide-react";
 import QuizSetup from "./QuizSetup";
 import QuizQuestion from "./QuizQuestion";
@@ -17,6 +16,7 @@ export default function Quiz() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
+  const [quizId, setQuizId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedTopic = sessionStorage.getItem("quizTopic");
@@ -66,14 +66,22 @@ export default function Quiz() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user && quizConfig) {
-        await supabase.from("quiz_history").insert({
-          user_id: user.id,
-          topic: quizConfig.topic,
-          score,
-          total_questions: questions.length,
-          questions,
-          answers: newAnswers,
-        });
+        const { data, error } = await supabase
+          .from("quiz_history")
+          .insert({
+            user_id: user.id,
+            topic: quizConfig.topic,
+            score,
+            total_questions: questions.length,
+            questions,
+            answers: newAnswers,
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          setQuizId(data.id);
+        }
       }
     }
 
@@ -88,6 +96,7 @@ export default function Quiz() {
     setUserAnswers([]);
     setError(null);
     setQuizConfig(null);
+    setQuizId(null);
   };
 
   return (
@@ -176,6 +185,8 @@ export default function Quiz() {
                 questions={questions}
                 userAnswers={userAnswers}
                 onRestart={handleRestart}
+                //@ts-ignore
+                quizId={quizId}
               />
             ) : (
               <QuizQuestion

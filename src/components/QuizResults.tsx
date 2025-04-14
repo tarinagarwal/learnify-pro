@@ -6,6 +6,8 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Brain,
+  Loader2,
 } from "lucide-react";
 import type { Question } from "../types/quiz";
 import {
@@ -16,18 +18,22 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { generateQuizAnalytics } from "../services/groq";
+import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   questions: Question[];
   userAnswers: string[];
   onRestart: () => void;
   isHistoryView?: boolean;
+  quizId?: string | null;
 }
 
 export default function QuizResults({
@@ -35,20 +41,82 @@ export default function QuizResults({
   userAnswers,
   onRestart,
   isHistoryView,
+  quizId,
 }: Props) {
+  const navigate = useNavigate();
+  const [openItems, setOpenItems] = useState<Record<number, boolean>>({});
+  const [generatingAnalytics, setGeneratingAnalytics] = useState(false);
+  const [hasAnalytics, setHasAnalytics] = useState(false);
+
   const score = questions.reduce(
     (acc, q, idx) => (q.correctAnswer === userAnswers[idx] ? acc + 1 : acc),
     0
   );
 
   const percentage = Math.round((score / questions.length) * 100);
-  const [openItems, setOpenItems] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    // Check if analytics exists for this quiz
+    const checkAnalytics = async () => {
+      if (!quizId) return;
+
+      const { data } = await supabase
+        .from("quiz_analytics")
+        .select("id")
+        .eq("quiz_id", quizId)
+        .single();
+
+      setHasAnalytics(!!data);
+    };
+
+    checkAnalytics();
+  }, [quizId]);
 
   const toggleItem = (idx: number) => {
     setOpenItems((prev) => ({
       ...prev,
       [idx]: !prev[idx],
     }));
+  };
+
+  const handleGenerateAnalytics = async () => {
+    try {
+      setGeneratingAnalytics(true);
+
+      // Get the quiz ID from the URL if in history view
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentQuizId = urlParams.get("id") || quizId;
+
+      if (!currentQuizId) {
+        console.error("No quiz ID found");
+        return;
+      }
+
+      // Generate analytics
+      const analysis = await generateQuizAnalytics(questions, userAnswers);
+
+      // Get user ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Store analytics in Supabase
+      const { error } = await supabase.from("quiz_analytics").insert({
+        quiz_id: currentQuizId,
+        user_id: user.id,
+        analysis,
+      });
+
+      if (error) throw error;
+
+      // Navigate to analytics page
+      navigate(`/quiz-analytics/${currentQuizId}`);
+    } catch (error) {
+      console.error("Error generating analytics:", error);
+    } finally {
+      setGeneratingAnalytics(false);
+    }
   };
 
   // Determine performance message
@@ -205,13 +273,47 @@ export default function QuizResults({
           })}
         </div>
 
-        <Button
-          onClick={onRestart}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
-        >
-          <RefreshCw className="w-5 h-5 mr-2" />
-          {isHistoryView ? "Back to History" : "Try Another Quiz"}
-        </Button>
+        <div className="flex flex-col gap-4">
+          {quizId && (
+            <>
+              {hasAnalytics ? (
+                <Button
+                  onClick={() => navigate(`/quiz-analytics/${quizId}`)}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
+                >
+                  <Brain className="w-5 h-5 mr-2" />
+                  View Analytics
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleGenerateAnalytics}
+                  disabled={generatingAnalytics}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
+                >
+                  {generatingAnalytics ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Generating Analysis...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="w-5 h-5 mr-2" />
+                      AI Mentor Analysis
+                    </>
+                  )}
+                </Button>
+              )}
+            </>
+          )}
+
+          <Button
+            onClick={onRestart}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6"
+          >
+            <RefreshCw className="w-5 h-5 mr-2" />
+            {isHistoryView ? "Back to History" : "Try Another Quiz"}
+          </Button>
+        </div>
       </CardContent>
     </div>
   );

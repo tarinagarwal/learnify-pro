@@ -415,3 +415,176 @@ export const generateResponse = async (imageData: string): Promise<string> => {
     throw error;
   }
 };
+
+export async function generateQuizAnalytics(
+  questions: Question[],
+  userAnswers: string[]
+): Promise<string> {
+  try {
+    // Calculate score
+    const score = questions.reduce(
+      (acc, q, idx) => (q.correctAnswer === userAnswers[idx] ? acc + 1 : acc),
+      0
+    );
+    const percentage = Math.round((score / questions.length) * 100);
+
+    const prompt = `As a Professional Learning Analytics AI Mentor, conduct a thorough and sophisticated analysis of this quiz performance. Here's the detailed quiz data:
+
+Score: ${score} out of ${questions.length} (${percentage}%)
+
+Detailed Question Analysis:
+${questions
+  .map(
+    (q, i) => `
+Question ${i + 1}: ${q.question}
+User's Answer: ${userAnswers[i]}
+Correct Answer: ${q.correctAnswer}
+Result: ${q.correctAnswer === userAnswers[i] ? "✓ Correct" : "✗ Incorrect"}
+Explanation: ${q.explanation}
+`
+  )
+  .join("\n")}
+
+Provide an extensive, professional analysis using this enhanced structure. Use proper markdown formatting throughout:
+
+# Performance Analytics Report
+
+## Executive Summary
+- Provide a concise yet comprehensive overview of the performance (${score}/${
+      questions.length
+    })
+- Highlight key performance indicators and patterns
+- Identify critical strengths and areas requiring attention
+- Present immediate actionable insights
+
+## Question-by-Question Analysis
+${questions
+  .map(
+    (_, i) => `
+### Question ${i + 1} Analysis
+- Evaluate the specific concept being tested
+- Analyze the user's approach and thought process
+- Identify any misconceptions or knowledge gaps
+- Provide targeted improvement strategies
+`
+  )
+  .join("\n")}
+
+## Performance Metrics
+
+### Proficiency Analysis
+- Break down performance by topic areas
+- Calculate proficiency percentages
+- Identify knowledge clusters and gaps
+- Analyze question difficulty distribution
+
+### Pattern Recognition
+- Identify recurring patterns in responses
+- Analyze timing and sequence effects
+- Evaluate conceptual understanding
+- Highlight systematic errors or biases
+
+### Cognitive Assessment
+- Evaluate critical thinking skills
+- Assess problem-solving approaches
+- Analyze theoretical vs practical understanding
+- Identify learning style indicators
+
+## Strategic Recommendations
+
+### Priority Focus Areas
+- List critical topics requiring immediate attention
+- Provide evidence-based rationale for each recommendation
+- Suggest optimal learning sequence
+- Set realistic improvement timelines
+
+### Curated Learning Resources
+
+#### Core Materials
+- Official Documentation: [Provide specific, relevant documentation links]
+- Video Tutorials: [Recommend specific, high-quality video courses]
+- Interactive Learning: [Suggest hands-on learning platforms]
+- Practice Exercises: [Link to relevant practice materials]
+
+#### Advanced Resources
+- Academic Papers: [List relevant academic resources]
+- Industry Publications: [Recommend professional reading materials]
+- Expert Blogs: [Suggest authoritative blog posts]
+- Community Forums: [Link to relevant discussion groups]
+
+### Personalized Study Strategy
+- Design custom learning approach based on performance
+- Suggest specific practice exercises
+- Provide time management guidelines
+- Recommend review techniques
+
+## Improvement Roadmap
+
+### Short-term Goals (1-2 weeks)
+- Set specific, measurable objectives
+- List immediate action items
+- Suggest daily/weekly practice routines
+- Define success metrics
+
+### Medium-term Goals (1-2 months)
+- Outline skill development pathway
+- Suggest milestone projects
+- Recommend assessment methods
+- Plan progress review points
+
+### Long-term Mastery Plan
+- Define mastery objectives
+- Suggest advanced learning paths
+- Recommend specialization areas
+- Plan ongoing skill maintenance
+
+## Professional Development Context
+- Relate quiz topics to industry applications
+- Suggest relevant certifications
+- Identify career advancement opportunities
+- Recommend professional networking strategies
+
+## Additional Insights
+- Provide unique learning style observations
+- Suggest complementary topics
+- Offer motivation and encouragement
+- Share success stories and best practices
+
+Format this analysis using professional markdown with:
+- Clear, hierarchical headers (h1-h4)
+- Structured bullet points and numbered lists
+- Code blocks for technical content
+- Tables for comparative data
+- Blockquotes for important insights
+- Bold and italic text for emphasis
+- Hyperlinks to all resources
+- Professional spacing and organization
+
+Maintain a tone that is:
+- Professional yet encouraging
+- Data-driven yet practical
+- Detailed yet accessible
+- Constructive yet supportive
+
+Ensure all analysis is based on the verified score of ${score}/${
+      questions.length
+    } and provides actionable, evidence-based recommendations.`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.1-8b-instant",
+      temperature: 0.7,
+      max_tokens: 4096,
+      top_p: 0.9,
+      frequency_penalty: 0.3,
+      presence_penalty: 0.3,
+    });
+
+    return (
+      completion.choices[0]?.message?.content || "Failed to generate analytics"
+    );
+  } catch (error) {
+    console.error("Error generating quiz analytics:", error);
+    throw new Error("Failed to generate quiz analytics");
+  }
+}
