@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   Route,
-  Search,
   Plus,
   Loader2,
   ExternalLink,
   ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { generateRoadmap } from "../services/groq";
@@ -128,8 +130,15 @@ export default function Roadmaps() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-4 border-purple-400/20 animate-pulse"></div>
+            <div className="absolute inset-0 rounded-full border-t-4 border-purple-400 animate-spin"></div>
+            <Sparkles className="absolute inset-0 m-auto h-8 w-8 text-purple-400" />
+          </div>
+          <p className="mt-6 text-xl text-gray-100">Loading Roadmaps...</p>
+        </div>
       </div>
     );
   }
@@ -137,9 +146,9 @@ export default function Roadmaps() {
   const renderStages = (stages: any[] = []) => {
     if (!Array.isArray(stages) || stages.length === 0) {
       return (
-        <Card className="text-center p-8">
+        <Card className="text-center p-8 bg-gray-800/30 backdrop-blur-sm border-gray-700">
           <CardContent>
-            <p className="text-muted-foreground">
+            <p className="text-gray-400">
               No stages available for this roadmap.
             </p>
           </CardContent>
@@ -148,40 +157,45 @@ export default function Roadmaps() {
     }
 
     return stages.map((stage, index) => (
-      <div key={index} className="bg-gray-50 rounded-lg p-6">
+      <div
+        key={index}
+        className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700"
+      >
         <div className="flex items-center gap-4 mb-4">
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               stage.level === "Beginner"
-                ? "bg-green-100 text-green-800"
+                ? "bg-green-900/50 text-green-300 border border-green-700"
                 : stage.level === "Intermediate"
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-red-100 text-red-800"
+                ? "bg-yellow-900/50 text-yellow-300 border border-yellow-700"
+                : "bg-red-900/50 text-red-300 border border-red-700"
             }`}
           >
             {stage.level}
           </span>
-          <h2 className="text-xl font-semibold">{stage.title}</h2>
+          <h2 className="text-xl font-semibold text-gray-100">{stage.title}</h2>
         </div>
 
-        <p className="text-muted-foreground mb-6">{stage.description}</p>
+        <p className="text-gray-400 mb-6">{stage.description}</p>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Skills */}
-          <Card>
+          <Card className="bg-gray-800/30 backdrop-blur-sm border-gray-700">
             <CardHeader>
-              <CardTitle>Required Skills</CardTitle>
+              <CardTitle className="text-gray-100">Required Skills</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {Array.isArray(stage.skills) &&
                   stage.skills.map((skill: any, i: number) => (
                     <div key={i}>
-                      <h4 className="font-medium">{skill.name}</h4>
-                      <p className="text-sm text-muted-foreground">
+                      <h4 className="font-medium text-gray-200">
+                        {skill.name}
+                      </h4>
+                      <p className="text-sm text-gray-400">
                         {skill.description}
                       </p>
-                      <p className="text-sm text-primary mt-1">
+                      <p className="text-sm text-purple-400 mt-1">
                         Why it matters: {skill.importance}
                       </p>
                     </div>
@@ -191,23 +205,28 @@ export default function Roadmaps() {
           </Card>
 
           {/* Resources */}
-          <Card>
+          <Card className="bg-gray-800/30 backdrop-blur-sm border-gray-700">
             <CardHeader>
-              <CardTitle>Learning Resources</CardTitle>
+              <CardTitle className="text-gray-100">
+                Learning Resources
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {Array.isArray(stage.resources) &&
                   stage.resources.map((resource: any, i: number) => (
-                    <div key={i} className="border-b pb-4 last:border-0">
+                    <div
+                      key={i}
+                      className="border-b border-gray-700 pb-4 last:border-0"
+                    >
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium">
+                        <h4 className="font-medium text-gray-200">
                           {resource.url ? (
                             <a
                               href={resource.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary hover:underline flex items-center gap-1"
+                              className="text-purple-400 hover:underline flex items-center gap-1"
                             >
                               {resource.name}
                               <ExternalLink className="h-3 w-3" />
@@ -219,24 +238,24 @@ export default function Roadmaps() {
                         <span
                           className={`text-xs px-2 py-1 rounded ${
                             resource.cost === "Free"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
+                              ? "bg-green-900/50 text-green-300 border border-green-700"
+                              : "bg-yellow-900/50 text-yellow-300 border border-yellow-700"
                           }`}
                         >
                           {resource.cost}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-gray-400 mt-1">
                         {resource.description}
                       </p>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-700/50 px-2 py-1 rounded text-gray-300">
                           {resource.format}
                         </span>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-700/50 px-2 py-1 rounded text-gray-300">
                           {resource.difficulty}
                         </span>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-700/50 px-2 py-1 rounded text-gray-300">
                           {resource.estimated_time}
                         </span>
                       </div>
@@ -249,26 +268,35 @@ export default function Roadmaps() {
 
         {/* Projects */}
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-4">Practice Projects</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-100">
+            Practice Projects
+          </h3>
           <div className="grid gap-4 md:grid-cols-2">
             {Array.isArray(stage.projects) &&
               stage.projects.map((project: any, i: number) => (
-                <Card key={i}>
+                <Card
+                  key={i}
+                  className="bg-gray-800/30 backdrop-blur-sm border-gray-700"
+                >
                   <CardHeader>
-                    <CardTitle>{project.name}</CardTitle>
-                    <CardDescription>{project.description}</CardDescription>
+                    <CardTitle className="text-gray-100">
+                      {project.name}
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      {project.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-medium mb-2">
+                        <h4 className="font-medium mb-2 text-gray-200">
                           Learning Objectives
                         </h4>
                         <ul className="list-disc pl-4 space-y-1">
                           {Array.isArray(project.learning_objectives) &&
                             project.learning_objectives.map(
                               (obj: string, j: number) => (
-                                <li key={j} className="text-sm">
+                                <li key={j} className="text-sm text-gray-400">
                                   {obj}
                                 </li>
                               )
@@ -276,12 +304,14 @@ export default function Roadmaps() {
                         </ul>
                       </div>
                       <div>
-                        <h4 className="font-medium mb-2">Key Features</h4>
+                        <h4 className="font-medium mb-2 text-gray-200">
+                          Key Features
+                        </h4>
                         <ul className="list-disc pl-4 space-y-1">
                           {Array.isArray(project.features) &&
                             project.features.map(
                               (feature: string, j: number) => (
-                                <li key={j} className="text-sm">
+                                <li key={j} className="text-sm text-gray-400">
                                   {feature}
                                 </li>
                               )
@@ -294,7 +324,7 @@ export default function Roadmaps() {
                             (skill: string, j: number) => (
                               <span
                                 key={j}
-                                className="px-2 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                                className="px-2 py-1 bg-purple-900/20 text-purple-300 border border-purple-700/50 rounded-full text-sm"
                               >
                                 {skill}
                               </span>
@@ -310,17 +340,19 @@ export default function Roadmaps() {
 
         {/* Best Practices & Pitfalls */}
         <div className="grid gap-6 md:grid-cols-2 mt-6">
-          <Card>
+          <Card className="bg-gray-800/30 backdrop-blur-sm border-gray-700">
             <CardHeader>
-              <CardTitle>Best Practices</CardTitle>
+              <CardTitle className="text-gray-100">Best Practices</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {Array.isArray(stage.best_practices) &&
                   stage.best_practices.map((practice: any, i: number) => (
                     <div key={i}>
-                      <h4 className="font-medium">{practice.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <h4 className="font-medium text-gray-200">
+                        {practice.title}
+                      </h4>
+                      <p className="text-sm text-gray-400 mt-1">
                         {practice.description}
                       </p>
                       <div className="mt-2 space-y-1">
@@ -329,7 +361,7 @@ export default function Roadmaps() {
                             (example: string, j: number) => (
                               <p
                                 key={j}
-                                className="text-sm bg-muted p-2 rounded"
+                                className="text-sm bg-gray-700/50 p-2 rounded text-gray-300"
                               >
                                 {example}
                               </p>
@@ -342,19 +374,19 @@ export default function Roadmaps() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gray-800/30 backdrop-blur-sm border-gray-700">
             <CardHeader>
-              <CardTitle>Common Pitfalls</CardTitle>
+              <CardTitle className="text-gray-100">Common Pitfalls</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {Array.isArray(stage.common_pitfalls) &&
                   stage.common_pitfalls.map((pitfall: any, i: number) => (
                     <div key={i}>
-                      <h4 className="font-medium text-red-600">
+                      <h4 className="font-medium text-red-400">
                         {pitfall.issue}
                       </h4>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-gray-400 mt-1">
                         Solution: {pitfall.solution}
                       </p>
                     </div>
@@ -368,7 +400,7 @@ export default function Roadmaps() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {selectedRoadmap ? (
           <>
@@ -376,29 +408,47 @@ export default function Roadmaps() {
               <Button
                 variant="ghost"
                 onClick={() => setSelectedRoadmap(null)}
-                className="mb-4"
+                className="mb-4 text-gray-300 hover:text-purple-400"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Roadmaps
               </Button>
 
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                <h1 className="text-3xl font-bold mb-2">
+              <div className="bg-gray-800/30 backdrop-blur-sm border-gray-700 rounded-lg shadow-lg p-8">
+                <h1 className="text-3xl font-bold mb-2 text-gray-100">
                   {selectedRoadmap.content?.title || "Untitled Roadmap"}
                 </h1>
-                <p className="text-lg text-muted-foreground mb-8">
+                <p className="text-lg text-gray-400 mb-8">
                   {selectedRoadmap.content?.description ||
                     "No description available"}
                 </p>
 
                 <Tabs defaultValue="stages" className="w-full">
-                  <TabsList className="w-full justify-start">
-                    <TabsTrigger value="stages">Learning Path</TabsTrigger>
-                    <TabsTrigger value="tools">Tools</TabsTrigger>
-                    <TabsTrigger value="certifications">
+                  <TabsList className="w-full justify-start bg-gray-800/50">
+                    <TabsTrigger
+                      value="stages"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      Learning Path
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="tools"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      Tools
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="certifications"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
                       Certifications
                     </TabsTrigger>
-                    <TabsTrigger value="career">Career Path</TabsTrigger>
+                    <TabsTrigger
+                      value="career"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      Career Path
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="stages" className="mt-6">
@@ -412,44 +462,54 @@ export default function Roadmaps() {
                       {Array.isArray(selectedRoadmap.content?.tools) &&
                         selectedRoadmap.content.tools.map(
                           (tool: any, index: number) => (
-                            <Card key={index}>
+                            <Card
+                              key={index}
+                              className="bg-gray-800/30 backdrop-blur-sm border-gray-700"
+                            >
                               <CardHeader>
                                 <div className="flex items-center justify-between">
-                                  <CardTitle>{tool.name}</CardTitle>
-                                  <span className="text-sm bg-muted px-2 py-1 rounded">
+                                  <CardTitle className="text-gray-100">
+                                    {tool.name}
+                                  </CardTitle>
+                                  <span className="text-sm bg-gray-700/50 px-2 py-1 rounded text-gray-300">
                                     {tool.category}
                                   </span>
                                 </div>
                               </CardHeader>
                               <CardContent>
-                                <p className="text-sm text-muted-foreground mb-4">
+                                <p className="text-sm text-gray-400 mb-4">
                                   {tool.description}
                                 </p>
                                 <a
                                   href={tool.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-primary hover:underline flex items-center gap-1 mb-4"
+                                  className="text-purple-400 hover:underline flex items-center gap-1 mb-4"
                                 >
                                   Official Documentation
                                   <ExternalLink className="h-3 w-3" />
                                 </a>
                                 <div className="space-y-4">
                                   <div>
-                                    <h4 className="font-medium mb-2">
+                                    <h4 className="font-medium mb-2 text-gray-200">
                                       Setup Guide
                                     </h4>
-                                    <p className="text-sm">
+                                    <p className="text-sm text-gray-400">
                                       {tool.setup_guide}
                                     </p>
                                   </div>
                                   <div>
-                                    <h4 className="font-medium mb-2">Pros</h4>
+                                    <h4 className="font-medium mb-2 text-gray-200">
+                                      Pros
+                                    </h4>
                                     <ul className="list-disc pl-4 space-y-1">
                                       {Array.isArray(tool.pros) &&
                                         tool.pros.map(
                                           (pro: string, i: number) => (
-                                            <li key={i} className="text-sm">
+                                            <li
+                                              key={i}
+                                              className="text-sm text-gray-400"
+                                            >
                                               {pro}
                                             </li>
                                           )
@@ -457,12 +517,17 @@ export default function Roadmaps() {
                                     </ul>
                                   </div>
                                   <div>
-                                    <h4 className="font-medium mb-2">Cons</h4>
+                                    <h4 className="font-medium mb-2 text-gray-200">
+                                      Cons
+                                    </h4>
                                     <ul className="list-disc pl-4 space-y-1">
                                       {Array.isArray(tool.cons) &&
                                         tool.cons.map(
                                           (con: string, i: number) => (
-                                            <li key={i} className="text-sm">
+                                            <li
+                                              key={i}
+                                              className="text-sm text-gray-400"
+                                            >
                                               {con}
                                             </li>
                                           )
@@ -470,7 +535,7 @@ export default function Roadmaps() {
                                     </ul>
                                   </div>
                                   <div>
-                                    <h4 className="font-medium mb-2">
+                                    <h4 className="font-medium mb-2 text-gray-200">
                                       Alternatives
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
@@ -479,7 +544,7 @@ export default function Roadmaps() {
                                           (alt: string, i: number) => (
                                             <span
                                               key={i}
-                                              className="px-2 py-1 bg-muted rounded text-sm"
+                                              className="px-2 py-1 bg-gray-700/50 rounded text-sm text-gray-300"
                                             >
                                               {alt}
                                             </span>
@@ -500,47 +565,54 @@ export default function Roadmaps() {
                       {Array.isArray(selectedRoadmap.content?.certifications) &&
                         selectedRoadmap.content.certifications.map(
                           (cert: any, index: number) => (
-                            <Card key={index}>
+                            <Card
+                              key={index}
+                              className="bg-gray-800/30 backdrop-blur-sm border-gray-700"
+                            >
                               <CardHeader>
                                 <div className="flex items-center justify-between">
-                                  <CardTitle>{cert.name}</CardTitle>
+                                  <CardTitle className="text-gray-100">
+                                    {cert.name}
+                                  </CardTitle>
                                   <span
                                     className={`text-sm px-2 py-1 rounded ${
                                       cert.level === "Beginner"
-                                        ? "bg-green-100 text-green-800"
+                                        ? "bg-green-900/50 text-green-300 border border-green-700"
                                         : cert.level === "Intermediate"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-red-100 text-red-800"
+                                        ? "bg-yellow-900/50 text-yellow-300 border border-yellow-700"
+                                        : "bg-red-900/50 text-red-300 border border-red-700"
                                     }`}
                                   >
                                     {cert.level}
                                   </span>
                                 </div>
-                                <CardDescription>
+                                <CardDescription className="text-gray-400">
                                   {cert.provider}
                                 </CardDescription>
                               </CardHeader>
                               <CardContent>
-                                <p className="text-sm text-muted-foreground mb-4">
+                                <p className="text-sm text-gray-400 mb-4">
                                   {cert.description}
                                 </p>
                                 <div className="space-y-4">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">
+                                    <span className="text-sm font-medium text-gray-300">
                                       Cost:
                                     </span>
-                                    <span className="text-sm">{cert.cost}</span>
+                                    <span className="text-sm text-gray-400">
+                                      {cert.cost}
+                                    </span>
                                   </div>
                                   <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">
+                                    <span className="text-sm font-medium text-gray-300">
                                       Validity:
                                     </span>
-                                    <span className="text-sm">
+                                    <span className="text-sm text-gray-400">
                                       {cert.validity}
                                     </span>
                                   </div>
                                   <div>
-                                    <h4 className="font-medium mb-2">
+                                    <h4 className="font-medium mb-2 text-gray-200">
                                       Preparation Resources
                                     </h4>
                                     <ul className="list-disc pl-4 space-y-1">
@@ -549,7 +621,10 @@ export default function Roadmaps() {
                                       ) &&
                                         cert.preparation_resources.map(
                                           (resource: string, i: number) => (
-                                            <li key={i} className="text-sm">
+                                            <li
+                                              key={i}
+                                              className="text-sm text-gray-400"
+                                            >
                                               {resource}
                                             </li>
                                           )
@@ -560,7 +635,7 @@ export default function Roadmaps() {
                                     href={cert.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-primary hover:underline flex items-center gap-1"
+                                    className="text-purple-400 hover:underline flex items-center gap-1"
                                   >
                                     Learn More
                                     <ExternalLink className="h-3 w-3" />
@@ -574,14 +649,16 @@ export default function Roadmaps() {
                   </TabsContent>
 
                   <TabsContent value="career" className="mt-6">
-                    <Card>
+                    <Card className="bg-gray-800/30 backdrop-blur-sm border-gray-700">
                       <CardHeader>
-                        <CardTitle>Career Progression Path</CardTitle>
+                        <CardTitle className="text-gray-100">
+                          Career Progression Path
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-6">
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">
+                            <h3 className="text-lg font-semibold mb-3 text-gray-100">
                               Possible Roles
                             </h3>
                             <div className="flex flex-wrap gap-2">
@@ -592,7 +669,7 @@ export default function Roadmaps() {
                                   (role: any, i: number) => (
                                     <span
                                       key={i}
-                                      className="px-3 py-1 bg-primary/10 text-primary rounded-full"
+                                      className="px-3 py-1 bg-purple-900/20 text-purple-300 border border-purple-700/50 rounded-full"
                                     >
                                       {typeof role === "string"
                                         ? role
@@ -604,7 +681,7 @@ export default function Roadmaps() {
                           </div>
 
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">
+                            <h3 className="text-lg font-semibold mb-3 text-gray-100">
                               Required Skills
                             </h3>
                             <div className="grid gap-2 md:grid-cols-2">
@@ -616,16 +693,16 @@ export default function Roadmaps() {
                                   (skill: any, i: number) => (
                                     <div
                                       key={i}
-                                      className="flex items-center gap-2 bg-muted p-2 rounded"
+                                      className="flex items-center gap-2 bg-gray-700/50 p-2 rounded"
                                     >
-                                      <span className="text-sm">
+                                      <span className="text-sm text-gray-300">
                                         {typeof skill === "string"
                                           ? skill
                                           : skill.name || "Unknown Skill"}
                                       </span>
                                       {typeof skill !== "string" &&
                                         skill.description && (
-                                          <span className="text-xs text-muted-foreground">
+                                          <span className="text-xs text-gray-400">
                                             - {skill.description}
                                           </span>
                                         )}
@@ -636,7 +713,7 @@ export default function Roadmaps() {
                           </div>
 
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">
+                            <h3 className="text-lg font-semibold mb-3 text-gray-100">
                               Career Progression
                             </h3>
                             <div className="space-y-4">
@@ -650,10 +727,12 @@ export default function Roadmaps() {
                                       key={i}
                                       className="flex items-center gap-4"
                                     >
-                                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-medium">
                                         {i + 1}
                                       </span>
-                                      <span>{step}</span>
+                                      <span className="text-gray-300">
+                                        {step}
+                                      </span>
                                     </div>
                                   )
                                 )}
@@ -661,10 +740,10 @@ export default function Roadmaps() {
                           </div>
 
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">
+                            <h3 className="text-lg font-semibold mb-3 text-gray-100">
                               Salary Range
                             </h3>
-                            <p className="text-lg font-medium text-primary">
+                            <p className="text-lg font-medium text-purple-400">
                               {selectedRoadmap.content?.career_path
                                 ?.salary_range || "Not available"}
                             </p>
@@ -679,14 +758,22 @@ export default function Roadmaps() {
           </>
         ) : (
           <>
-            <div className="text-center mb-12">
-              <Route className="mx-auto h-16 w-16 text-primary" />
-              <h2 className="mt-2 text-4xl font-bold text-primary">
-                Learning Roadmaps
-              </h2>
-              <p className="mt-2 text-xl text-muted-foreground">
-                Discover structured learning paths for any technology
-              </p>
+            {/* Page Header with animated background */}
+
+            <div className="relative py-16 px-4 sm:px-6 lg:px-8 mb-12 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+              {/* Animated grid background */}
+              <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+              </div>
+              <div className="relative z-10 text-center">
+                <Route className="mx-auto h-16 w-16 text-purple-400" />
+                <h2 className="mt-2 text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-300 to-blue-400">
+                  Leaning Roadmaps
+                </h2>
+                <p className="mt-2 text-xl text-gray-300 max-w-2xl mx-auto">
+                  Discover structured learning paths for any technology
+                </p>
+              </div>
             </div>
 
             <Tabs
@@ -700,41 +787,57 @@ export default function Roadmaps() {
                     value={searchQuery}
                     onChange={setSearchQuery}
                     placeholder="Search roadmaps..."
+                    className="bg-gray-800/50 border-gray-700 text-gray-100"
                   />
-                  <TabsList>
-                    <TabsTrigger value="all">All Roadmaps</TabsTrigger>
-                    <TabsTrigger value="my-roadmaps">My Roadmaps</TabsTrigger>
+                  <TabsList className="bg-gray-800/50">
+                    <TabsTrigger
+                      value="all"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      All Roadmaps
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="my-roadmaps"
+                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+                    >
+                      My Roadmaps
+                    </TabsTrigger>
                   </TabsList>
                 </div>
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button>
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Roadmap
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="bg-gray-800 border-gray-700 text-gray-100">
                     <DialogHeader>
-                      <DialogTitle>Create New Roadmap</DialogTitle>
+                      <DialogTitle className="text-gray-100">
+                        Create New Roadmap
+                      </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="topic">Topic</Label>
+                        <Label htmlFor="topic" className="text-gray-300">
+                          Topic
+                        </Label>
                         <Input
                           id="topic"
                           placeholder="e.g., React Development, Web Development"
                           value={topic}
                           onChange={(e) => setTopic(e.target.value)}
+                          className="bg-gray-700/50 border-gray-600 text-gray-100 focus:ring-purple-500 focus:border-purple-500"
                         />
                         {error && (
-                          <p className="text-sm text-red-500 mt-1">{error}</p>
+                          <p className="text-sm text-red-400 mt-1">{error}</p>
                         )}
                       </div>
                       <Button
                         onClick={handleCreateRoadmap}
                         disabled={generating || !topic.trim()}
-                        className="w-full"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                       >
                         {generating ? (
                           <>
@@ -751,13 +854,11 @@ export default function Roadmaps() {
               </div>
 
               {filteredRoadmaps.length === 0 ? (
-                <Card className="text-center p-8 bg-gray-100">
+                <Card className="text-center p-8 bg-gray-800/30 backdrop-blur-sm border-gray-700">
                   <CardContent>
-                    <Route className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-xl text-muted-foreground">
-                      No roadmaps found
-                    </p>
-                    <p className="mt-2 text-muted-foreground">
+                    <Route className="mx-auto h-12 w-12 text-gray-500 mb-4" />
+                    <p className="text-xl text-gray-300">No roadmaps found</p>
+                    <p className="mt-2 text-gray-400">
                       Try a different search term or create a new roadmap
                     </p>
                   </CardContent>
@@ -767,14 +868,14 @@ export default function Roadmaps() {
                   {filteredRoadmaps.map((roadmap) => (
                     <Card
                       key={roadmap.id}
-                      className="bg-gray-100 hover:shadow-lg transition-shadow cursor-pointer"
+                      className="bg-gray-800/30 backdrop-blur-sm border-gray-700 hover:shadow-[0_0_15px_rgba(168,85,247,0.15)] transition-all duration-300 cursor-pointer"
                       onClick={() => setSelectedRoadmap(roadmap)}
                     >
                       <CardHeader>
-                        <CardTitle>
+                        <CardTitle className="text-gray-100">
                           {roadmap.content?.title || "Untitled Roadmap"}
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-gray-400">
                           {roadmap.content?.description ||
                             "No description available"}
                         </CardDescription>
@@ -797,7 +898,7 @@ export default function Roadmaps() {
                                         : "bg-red-500"
                                     }`}
                                   />
-                                  <span className="text-sm text-muted-foreground">
+                                  <span className="text-sm text-gray-400">
                                     {stage.title}
                                   </span>
                                 </div>
@@ -813,6 +914,27 @@ export default function Roadmaps() {
           </>
         )}
       </div>
+
+      {/* Animation keyframes */}
+      <style jsx>{`
+        @keyframes float {
+          0% {
+            transform: translateY(0) translateX(0);
+          }
+          25% {
+            transform: translateY(-10px) translateX(10px);
+          }
+          50% {
+            transform: translateY(0) translateX(20px);
+          }
+          75% {
+            transform: translateY(10px) translateX(10px);
+          }
+          100% {
+            transform: translateY(0) translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

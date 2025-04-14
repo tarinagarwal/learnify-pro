@@ -1,4 +1,4 @@
-"use client";
+
 import { useState, useEffect } from "react";
 import { Brain, Sparkles } from "lucide-react";
 import QuizSetup from "./QuizSetup";
