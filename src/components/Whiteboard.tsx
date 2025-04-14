@@ -1,4 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+"use client";
+
+import type React from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useBlackboardStore } from "../store/blackboardStore";
@@ -14,8 +18,12 @@ import {
   History,
   Download,
   X,
+  Palette,
+  Minus,
+  Plus,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { Button } from "@/components/ui/button";
 
 interface Point {
   x: number;
@@ -37,7 +45,7 @@ interface AIResponse {
 export const Whiteboard: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentColor, setCurrentColor] = useState("#000000");
+  const [currentColor, setCurrentColor] = useState("#ffffff");
   const [currentWidth, setCurrentWidth] = useState(2);
   const [currentPoints, setCurrentPoints] = useState<Point[]>([]);
   const { drawingData, addStroke, clearDrawing } = useBlackboardStore();
@@ -281,152 +289,225 @@ export const Whiteboard: React.FC = () => {
     link.click();
   };
 
+  // Predefined colors for quick selection
+  const colorOptions = [
+    "#f87171", // red
+    "#fb923c", // orange
+    "#facc15", // yellow
+    "#4ade80", // green
+    "#60a5fa", // blue
+    "#a78bfa", // purple
+    "#f472b6", // pink
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back
-          </button>
-          <h1 className="text-2xl font-bold">
-            {decodeURIComponent(whiteboardTitle || "")}
-          </h1>
-          <div className="flex items-center gap-4">
-            <button
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Header Group: Back button and Title */}
+          <div className="flex justify-between items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-300 hover:text-purple-400"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-300">
+              {decodeURIComponent(whiteboardTitle || "")}
+            </h1>
+          </div>
+
+          {/* Action Buttons Group */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+            <Button
+              variant="outline"
               onClick={clearDrawing}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+              className="flex items-center gap-2 border-gray-700 text-gray-900"
               disabled={loading}
             >
-              <Eraser className="w-5 h-5" />
+              <Eraser className="w-4 h-4" />
               Clear
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setShowResponseHistory(true)}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+              className="flex items-center gap-2 border-gray-700 text-gray-900"
             >
-              <History className="w-5 h-5" />
+              <History className="w-4 h-4" />
               Response History
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={downloadCanvas}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-md"
+              className="flex items-center gap-2 border-gray-700 text-gray-900"
             >
-              <Download className="w-5 h-5" />
+              <Download className="w-4 h-4" />
               Download
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={getAIResponse}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
               disabled={loading}
             >
-              <MessageSquare className="w-5 h-5" />
+              <MessageSquare className="w-4 h-4" />
               Get AI Response
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={saveWhiteboard}
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-md"
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white"
               disabled={loading}
             >
-              <Save className="w-5 h-5" />
+              <Save className="w-4 h-4" />
               Save
-            </button>
+            </Button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-4">
-          <div className="mb-4 flex items-center gap-4">
-            <input
-              type="color"
-              value={currentColor}
-              onChange={(e) => setCurrentColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer"
-            />
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={currentWidth}
-              onChange={(e) => setCurrentWidth(parseInt(e.target.value))}
-              className="w-32"
+        <div className="bg-gray-900 rounded-xl shadow-lg border border-gray-800 p-6 mb-6">
+          <div className="mb-6 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-800 py-2 rounded-lg">
+              <Palette className="w-5 h-5 text-purple-400" />
+              <div className="flex gap-2">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setCurrentColor(color)}
+                    className={`w-6 h-6 rounded-full transition-transform ${
+                      currentColor === color
+                        ? "scale-125 ring-2 ring-purple-500"
+                        : ""
+                    }`}
+                    style={{ backgroundColor: color }}
+                    aria-label={`Select ${color} color`}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={currentColor}
+                  onChange={(e) => setCurrentColor(e.target.value)}
+                  className="w-6 h-6 rounded-full cursor-pointer bg-transparent"
+                  aria-label="Custom color picker"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-gray-800 p-2 rounded-lg">
+              <button
+                onClick={() => setCurrentWidth(Math.max(1, currentWidth - 1))}
+                className="text-gray-400 hover:text-purple-400 p-1"
+                disabled={currentWidth <= 1}
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={currentWidth}
+                onChange={(e) =>
+                  setCurrentWidth(Number.parseInt(e.target.value))
+                }
+                className="w-32 accent-purple-500"
+              />
+              <button
+                onClick={() => setCurrentWidth(Math.min(20, currentWidth + 1))}
+                className="text-gray-400 hover:text-purple-400 p-1"
+                disabled={currentWidth >= 20}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <span className="text-sm text-gray-300 min-w-[24px] text-center">
+                {currentWidth}px
+              </span>
+            </div>
+          </div>
+
+          <div className="relative rounded-lg overflow-hidden">
+            {/* Canvas background with grid pattern */}
+            <div className="absolute inset-0 bg-gray-800 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+
+            <canvas
+              ref={canvasRef}
+              className="w-full h-[600px] relative z-10 cursor-crosshair"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={endDrawing}
+              onMouseLeave={endDrawing}
             />
           </div>
-          <canvas
-            ref={canvasRef}
-            className="w-full h-[600px] border border-gray-300 rounded cursor-crosshair"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={endDrawing}
-            onMouseLeave={endDrawing}
-          />
         </div>
       </div>
 
       {/* Response History Dialog */}
       {showResponseHistory && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl max-w-4xl w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-medium text-gray-100">
                 AI Response History
               </h3>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowResponseHistory(false)}
-                className="text-gray-400 hover:text-gray-500"
+                className="text-gray-400 hover:text-gray-300"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
-            <div className="max-h-[70vh] overflow-y-auto">
+            <div className="max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
               {aiResponses.length === 0 ? (
-                <p className="text-center text-gray-500 py-4">
-                  No responses yet
-                </p>
+                <div className="text-center py-12">
+                  <MessageSquare className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                  <p className="text-lg text-gray-300">No responses yet</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Use the "Get AI Response" button to analyze your drawing
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-6">
                   {aiResponses.map((response) => (
                     <div
                       key={response.id}
-                      className="bg-gray-50 rounded-lg p-6"
+                      className="bg-gray-900/50 rounded-lg p-6 border border-gray-700"
                     >
                       <div className="flex justify-between items-start mb-4">
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-400">
                           {new Date(response.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <div className="prose prose-sm max-w-none">
+                      <div className="prose prose-invert max-w-none">
                         <ReactMarkdown
                           components={{
                             h3: ({ node, ...props }) => (
                               <h3
-                                className="text-lg font-semibold text-gray-900 mb-2"
+                                className="text-lg font-semibold text-gray-100 mb-2"
                                 {...props}
                               />
                             ),
                             strong: ({ node, ...props }) => (
                               <strong
-                                className="font-semibold text-gray-900"
+                                className="font-semibold text-purple-300"
                                 {...props}
                               />
                             ),
                             blockquote: ({ node, ...props }) => (
                               <blockquote
-                                className="border-l-4 border-gray-300 pl-4 italic my-4"
+                                className="border-l-4 border-purple-500 pl-4 italic my-4 text-gray-300"
                                 {...props}
                               />
                             ),
                             ul: ({ node, ...props }) => (
                               <ul
-                                className="list-disc pl-4 space-y-1 mb-4"
+                                className="list-disc pl-4 space-y-1 mb-4 text-gray-300"
                                 {...props}
                               />
                             ),
                             ol: ({ node, ...props }) => (
                               <ol
-                                className="list-decimal pl-4 space-y-1 mb-4"
+                                className="list-decimal pl-4 space-y-1 mb-4 text-gray-300"
                                 {...props}
                               />
                             ),
@@ -434,13 +515,13 @@ export const Whiteboard: React.FC = () => {
                             code: ({ node, inline, ...props }) =>
                               inline ? (
                                 <code
-                                  className="bg-[#1e2837] rounded px-1 py-0.5 text-sm font-mono"
+                                  className="bg-gray-800 rounded px-1 py-0.5 text-sm font-mono text-purple-300"
                                   {...props}
                                 />
                               ) : (
                                 //@ts-ignore
                                 <pre
-                                  className="bg-[#1e2837] rounded-md p-3 text-sm font-mono overflow-x-auto"
+                                  className="bg-gray-800 rounded-md p-3 text-sm font-mono overflow-x-auto"
                                   {...props}
                                 />
                               ),
@@ -471,6 +552,27 @@ export const Whiteboard: React.FC = () => {
         onClose={() => setShowResponseDialog(false)}
         drawingData={drawingData}
       />
+
+      {/* Custom scrollbar styles */}
+      <style
+        //@ts-ignore
+        jsx
+      >{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(31, 41, 55, 0.5);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(139, 92, 246, 0.5);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(139, 92, 246, 0.7);
+        }
+      `}</style>
     </div>
   );
 };

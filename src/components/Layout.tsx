@@ -1,15 +1,30 @@
-import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth", // This enables smooth scrolling
+    });
+  }, [pathname]);
+
+  return null;
+}
 
 export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <ScrollToTop />
       <main className="flex-grow pt-16">
         <Outlet />
       </main>
-      <footer className="bg-gray-950 text-gray-400 py-12 px-4">
+      <footer className="bg-gray-950 border-t border-[#777696] text-gray-400 py-12 px-4">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <h3 className="text-white text-lg font-semibold mb-4">Learnify</h3>
@@ -69,7 +84,7 @@ export default function Layout() {
                   About Us
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   to="/blog"
                   className="hover:text-purple-400 transition-colors"
@@ -84,7 +99,7 @@ export default function Layout() {
                 >
                   Careers
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   to="/contact"

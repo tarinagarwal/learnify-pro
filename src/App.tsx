@@ -18,6 +18,11 @@ import { Whiteboard } from "./components/Whiteboard";
 import Community from "./pages/Community";
 import CommunityChat from "./pages/CommunityChat";
 import Roadmaps from "./pages/Roadmaps";
+import ContactPage from "./pages/footer-links/contact";
+import AboutPage from "./pages/footer-links/about";
+import TermsPage from "./pages/footer-links/terms";
+import PrivacyPage from "./pages/footer-links/privacy";
+import CookiesPage from "./pages/footer-links/cookies";
 
 function App() {
   return (
@@ -131,6 +136,11 @@ function App() {
               </AuthGuard>
             }
           />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/cookies" element={<CookiesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
