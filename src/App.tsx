@@ -24,6 +24,7 @@ import TermsPage from "./pages/footer-links/terms";
 import PrivacyPage from "./pages/footer-links/privacy";
 import CookiesPage from "./pages/footer-links/cookies";
 import QuizAnalytics from "./pages/QuizAnalytics";
+import LanguageTutor from "./pages/LanguageTutor"; // Add this line
 
 function App() {
   return (
@@ -142,6 +143,14 @@ function App() {
             element={
               <AuthGuard>
                 <Roadmaps />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/language-tutor"
+            element={
+              <AuthGuard>
+                <LanguageTutor />
               </AuthGuard>
             }
           />

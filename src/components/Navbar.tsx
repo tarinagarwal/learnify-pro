@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   UserCircle,
@@ -22,6 +20,7 @@ import {
   Bell,
   Settings,
   Users,
+  Languages,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -187,6 +186,7 @@ export default function Navbar() {
         { to: "/pdf-chat", icon: MessageSquare, label: "PDF Chat" },
         { to: "/quiz", icon: LucideMessageCircleQuestion, label: "Quiz" },
         { to: "/history", icon: History, label: "Quiz History" },
+        { to: "/language-tutor", icon: Languages, label: "Language Tutor" },
       ],
     },
     {
