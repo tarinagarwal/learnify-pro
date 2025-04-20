@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthGuard from "./components/AuthGuard";
+import AuthRedirectGuard from "./components/AuthRedireectGuard";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -24,9 +25,9 @@ import TermsPage from "./pages/footer-links/terms";
 import PrivacyPage from "./pages/footer-links/privacy";
 import CookiesPage from "./pages/footer-links/cookies";
 import QuizAnalytics from "./pages/QuizAnalytics";
-import LanguageTutor from "./pages/LanguageTutor"; // Add this line
-import ForgotPassword from "./pages/ForgotPassword";
+import LanguageTutor from "./pages/LanguageTutor";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
 function App() {
@@ -35,8 +36,39 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/login"
+            element={
+              <AuthRedirectGuard>
+                <Login />
+              </AuthRedirectGuard>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <AuthRedirectGuard>
+                <Signup />
+              </AuthRedirectGuard>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <AuthRedirectGuard>
+                <ForgotPassword />
+              </AuthRedirectGuard>
+            }
+          />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/profile"
+            element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            }
+          />
           <Route
             path="/quiz"
             element={
@@ -157,22 +189,11 @@ function App() {
               </AuthGuard>
             }
           />
-
-          <Route
-            path="/profile"
-            element={
-              <AuthGuard>
-                <Profile />
-              </AuthGuard>
-            }
-          />
-          <Route path="/login/forgot-password" element={<ForgotPassword />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/cookies" element={<CookiesPage />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
       </Routes>
     </BrowserRouter>
