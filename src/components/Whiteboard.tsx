@@ -1,13 +1,8 @@
-"use client";
-
-import type React from "react";
-
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useBlackboardStore } from "../store/blackboardStore";
 import { AlertDialog } from "./AlertDialog";
-//@ts-ignore
 import { ResponseDialog } from "./ResponseDialog";
 import { generateResponse } from "../services/groq";
 import {
@@ -21,6 +16,7 @@ import {
   Palette,
   Minus,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
@@ -40,6 +36,7 @@ interface AIResponse {
   id: string;
   response_text: string;
   created_at: string;
+  drawing_data?: DrawingData[];
 }
 
 export const Whiteboard: React.FC = () => {
@@ -59,6 +56,7 @@ export const Whiteboard: React.FC = () => {
   const [showResponseHistory, setShowResponseHistory] = useState(false);
   const [aiResponses, setAiResponses] = useState<AIResponse[]>([]);
   const [showResponseDialog, setShowResponseDialog] = useState(false);
+  const [currentResponse, setCurrentResponse] = useState<string>("");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,41 +70,31 @@ export const Whiteboard: React.FC = () => {
       return;
     }
 
-    // Load AI responses
+    loadWhiteboardData();
     loadAIResponses();
+  }, [whiteboardId, navigate]);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const loadWhiteboardData = async () => {
+    if (!whiteboardId) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    try {
+      const { data, error } = await supabase
+        .from("whiteboards")
+        .select("drawing_data")
+        .eq("id", whiteboardId)
+        .single();
 
-    // Set canvas size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw all strokes
-    drawingData.forEach((stroke) => {
-      if (!ctx) return;
-      ctx.beginPath();
-      ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = stroke.width;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      stroke.points.forEach((point, index) => {
-        if (index === 0) {
-          ctx.moveTo(point.x, point.y);
-        } else {
-          ctx.lineTo(point.x, point.y);
-        }
-      });
-      ctx.stroke();
-    });
-  }, [drawingData, whiteboardId, navigate]);
+      if (error) throw error;
+      if (data) {
+        clearDrawing();
+        data.drawing_data.forEach((stroke: DrawingData) => {
+          addStroke(stroke);
+        });
+      }
+    } catch (error) {
+      console.error("Error loading whiteboard data:", error);
+    }
+  };
 
   const loadAIResponses = async () => {
     if (!whiteboardId) return;
@@ -125,19 +113,43 @@ export const Whiteboard: React.FC = () => {
     }
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getPointFromEvent = (
+    e: React.MouseEvent | React.TouchEvent | PointerEvent,
+    canvas: HTMLCanvasElement
+  ): Point | null => {
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+
+    if ("touches" in e) {
+      const touch = e.touches[0];
+      x = touch.clientX - rect.left;
+      y = touch.clientY - rect.top;
+    } else if ("clientX" in e) {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    } else {
+      return null;
+    }
+
+    return { x, y };
+  };
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const point = getPointFromEvent(e, canvas);
+    if (!point) return;
 
     setIsDrawing(true);
-    setCurrentPoints([{ x, y }]);
+    setCurrentPoints([point]);
+
+    if ("touches" in e) {
+      e.preventDefault();
+    }
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing) return;
 
     const canvas = canvasRef.current;
@@ -146,11 +158,10 @@ export const Whiteboard: React.FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const point = getPointFromEvent(e, canvas);
+    if (!point) return;
 
-    setCurrentPoints((prev) => [...prev, { x, y }]);
+    setCurrentPoints((prev) => [...prev, point]);
 
     ctx.beginPath();
     ctx.strokeStyle = currentColor;
@@ -161,8 +172,12 @@ export const Whiteboard: React.FC = () => {
     if (currentPoints.length > 0) {
       const lastPoint = currentPoints[currentPoints.length - 1];
       ctx.moveTo(lastPoint.x, lastPoint.y);
-      ctx.lineTo(x, y);
+      ctx.lineTo(point.x, point.y);
       ctx.stroke();
+    }
+
+    if ("touches" in e) {
+      e.preventDefault();
     }
   };
 
@@ -218,18 +233,14 @@ export const Whiteboard: React.FC = () => {
       setLoading(true);
       const canvas = canvasRef.current;
 
-      // Create a temporary canvas with white background
       const tempCanvas = document.createElement("canvas");
       tempCanvas.width = canvas.width;
       tempCanvas.height = canvas.height;
       const tempCtx = tempCanvas.getContext("2d");
       if (!tempCtx) return;
 
-      // Fill white background
       tempCtx.fillStyle = "white";
       tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-      // Copy the drawing
       tempCtx.drawImage(canvas, 0, 0);
 
       const imageData = tempCanvas.toDataURL("image/png");
@@ -239,20 +250,15 @@ export const Whiteboard: React.FC = () => {
         {
           whiteboard_id: whiteboardId,
           response_text: response,
+          drawing_data: drawingData,
         },
       ]);
 
       if (error) throw error;
 
-      // Reload responses
       await loadAIResponses();
-
-      setAlert({
-        show: true,
-        title: "AI Response",
-        message: response,
-        type: "info",
-      });
+      setCurrentResponse(response);
+      setShowResponseDialog(true);
     } catch (error) {
       console.error("Error getting AI response:", error);
       setAlert({
@@ -276,11 +282,8 @@ export const Whiteboard: React.FC = () => {
     const tempCtx = tempCanvas.getContext("2d");
     if (!tempCtx) return;
 
-    // Fill white background
     tempCtx.fillStyle = "white";
     tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    // Copy the drawing
     tempCtx.drawImage(canvas, 0, 0);
 
     const link = document.createElement("a");
@@ -289,22 +292,103 @@ export const Whiteboard: React.FC = () => {
     link.click();
   };
 
-  // Predefined colors for quick selection
   const colorOptions = [
-    "#f87171", // red
-    "#fb923c", // orange
-    "#facc15", // yellow
-    "#4ade80", // green
-    "#60a5fa", // blue
-    "#a78bfa", // purple
-    "#f472b6", // pink
+    "#f87171",
+    "#fb923c",
+    "#facc15",
+    "#4ade80",
+    "#60a5fa",
+    "#a78bfa",
+    "#f472b6",
   ];
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.addEventListener("touchstart", startDrawing as any);
+    canvas.addEventListener("touchmove", draw as any);
+    canvas.addEventListener("touchend", endDrawing);
+    canvas.addEventListener("pointerdown", startDrawing as any);
+    canvas.addEventListener("pointermove", draw as any);
+    canvas.addEventListener("pointerup", endDrawing);
+    canvas.addEventListener("pointerout", endDrawing);
+    canvas.addEventListener("touchstart", (e) => e.preventDefault());
+    canvas.addEventListener("touchmove", (e) => e.preventDefault());
+
+    return () => {
+      canvas.removeEventListener("touchstart", startDrawing as any);
+      canvas.removeEventListener("touchmove", draw as any);
+      canvas.removeEventListener("touchend", endDrawing);
+      canvas.removeEventListener("pointerdown", startDrawing as any);
+      canvas.removeEventListener("pointermove", draw as any);
+      canvas.removeEventListener("pointerup", endDrawing);
+      canvas.removeEventListener("pointerout", endDrawing);
+    };
+  }, [isDrawing, currentColor, currentWidth, currentPoints]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawingData.forEach((stroke) => {
+      if (!ctx) return;
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = stroke.width;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      stroke.points.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      ctx.stroke();
+    });
+  }, [drawingData]);
+
+  const renderCanvas = (
+    canvasElement: HTMLCanvasElement,
+    data: DrawingData[]
+  ) => {
+    const ctx = canvasElement.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+    data.forEach((path) => {
+      if (!path.points || path.points.length < 2) return;
+
+      ctx.beginPath();
+      ctx.moveTo(path.points[0].x, path.points[0].y);
+      path.points.slice(1).forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.strokeStyle = path.color || "#000000";
+      ctx.lineWidth = path.width || 2;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.stroke();
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          {/* Header Group: Back button and Title */}
           <div className="flex justify-between items-center gap-4">
             <Button
               variant="ghost"
@@ -319,7 +403,6 @@ export const Whiteboard: React.FC = () => {
             </h1>
           </div>
 
-          {/* Action Buttons Group */}
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
             <Button
               variant="outline"
@@ -425,22 +508,21 @@ export const Whiteboard: React.FC = () => {
           </div>
 
           <div className="relative rounded-lg overflow-hidden">
-            {/* Canvas background with grid pattern */}
             <div className="absolute inset-0 bg-gray-800 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:20px_20px]"></div>
 
             <canvas
               ref={canvasRef}
-              className="w-full h-[600px] relative z-10 cursor-crosshair"
+              className="w-full h-[600px] relative z-10 cursor-crosshair touch-none"
               onMouseDown={startDrawing}
               onMouseMove={draw}
               onMouseUp={endDrawing}
               onMouseLeave={endDrawing}
+              style={{ touchAction: "none" }}
             />
           </div>
         </div>
       </div>
 
-      {/* Response History Dialog */}
       {showResponseHistory && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl max-w-4xl w-full mx-4 p-6">
@@ -478,57 +560,85 @@ export const Whiteboard: React.FC = () => {
                           {new Date(response.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <div className="prose prose-invert max-w-none">
-                        <ReactMarkdown
-                          components={{
-                            h3: ({ node, ...props }) => (
-                              <h3
-                                className="text-lg font-semibold text-gray-100 mb-2"
-                                {...props}
-                              />
-                            ),
-                            strong: ({ node, ...props }) => (
-                              <strong
-                                className="font-semibold text-purple-300"
-                                {...props}
-                              />
-                            ),
-                            blockquote: ({ node, ...props }) => (
-                              <blockquote
-                                className="border-l-4 border-purple-500 pl-4 italic my-4 text-gray-300"
-                                {...props}
-                              />
-                            ),
-                            ul: ({ node, ...props }) => (
-                              <ul
-                                className="list-disc pl-4 space-y-1 mb-4 text-gray-300"
-                                {...props}
-                              />
-                            ),
-                            ol: ({ node, ...props }) => (
-                              <ol
-                                className="list-decimal pl-4 space-y-1 mb-4 text-gray-300"
-                                {...props}
-                              />
-                            ),
-                            //@ts-ignore
-                            code: ({ node, inline, ...props }) =>
-                              inline ? (
-                                <code
-                                  className="bg-gray-800 rounded px-1 py-0.5 text-sm font-mono text-purple-300"
-                                  {...props}
-                                />
-                              ) : (
-                                //@ts-ignore
-                                <pre
-                                  className="bg-gray-800 rounded-md p-3 text-sm font-mono overflow-x-auto"
-                                  {...props}
-                                />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {response.drawing_data && (
+                          <div className="relative w-full aspect-[4/3] bg-white rounded-lg shadow-md overflow-hidden">
+                            <canvas
+                              width={800}
+                              height={600}
+                              className="w-full h-full"
+                              ref={(canvas) => {
+                                if (canvas && response.drawing_data) {
+                                  renderCanvas(canvas, response.drawing_data);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="prose prose-invert max-w-none">
+                          <ReactMarkdown
+                            components={{
+                              h1: ({ children }) => (
+                                <h1 className="text-2xl font-bold mb-4 pb-2 border-b border-gray-700">
+                                  {children}
+                                </h1>
                               ),
-                          }}
-                        >
-                          {response.response_text}
-                        </ReactMarkdown>
+                              h2: ({ children }) => (
+                                <h2 className="text-xl font-semibold mb-3">
+                                  {children}
+                                </h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="text-lg font-semibold mb-2">
+                                  {children}
+                                </h3>
+                              ),
+                              p: ({ children }) => (
+                                <p className="mb-4 leading-relaxed text-gray-300">
+                                  {children}
+                                </p>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-semibold text-purple-400">
+                                  {children}
+                                </strong>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-purple-500 pl-4 italic my-4 text-gray-300">
+                                  {children}
+                                </blockquote>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="list-disc pl-4 space-y-1 mb-4 text-gray-300">
+                                  {children}
+                                </ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="list-decimal pl-4 space-y-1 mb-4 text-gray-300">
+                                  {children}
+                                </ol>
+                              ),
+                              code: ({ inline, children }) => {
+                                if (inline) {
+                                  return (
+                                    <code className="bg-gray-800 rounded px-1 py-0.5 text-sm font-mono text-purple-300">
+                                      {children}
+                                    </code>
+                                  );
+                                }
+                                return (
+                                  <pre className="bg-gray-800 rounded-md p-4 my-4 overflow-x-auto">
+                                    <code className="text-sm font-mono">
+                                      {children}
+                                    </code>
+                                  </pre>
+                                );
+                              },
+                            }}
+                          >
+                            {response.response_text}
+                          </ReactMarkdown>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -551,13 +661,10 @@ export const Whiteboard: React.FC = () => {
         isOpen={showResponseDialog}
         onClose={() => setShowResponseDialog(false)}
         drawingData={drawingData}
+        response={currentResponse}
       />
 
-      {/* Custom scrollbar styles */}
-      <style
-        //@ts-ignore
-        jsx
-      >{`
+      <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
         }

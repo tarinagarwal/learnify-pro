@@ -404,9 +404,11 @@ export const generateResponse = async (imageData: string): Promise<string> => {
           ],
         },
       ],
-      model: "llama-3.2-90b-vision-preview",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       temperature: 0.7,
       max_tokens: 2048,
+      top_p: 1,
+      stream: false,
     });
 
     return completion.choices[0]?.message?.content || "No response generated";
