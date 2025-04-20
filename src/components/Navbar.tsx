@@ -303,13 +303,7 @@ export default function Navbar() {
                       <UserCircle className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="focus:bg-gray-800 focus:text-purple-400 cursor-pointer text-gray-300"
-                      onClick={() => navigate("/settings")}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
+
                     <DropdownMenuSeparator className="bg-gray-800" />
                     <DropdownMenuItem
                       className="focus:bg-gray-800 focus:text-purple-400 cursor-pointer text-gray-300"
