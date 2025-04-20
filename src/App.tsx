@@ -25,6 +25,9 @@ import PrivacyPage from "./pages/footer-links/privacy";
 import CookiesPage from "./pages/footer-links/cookies";
 import QuizAnalytics from "./pages/QuizAnalytics";
 import LanguageTutor from "./pages/LanguageTutor"; // Add this line
+import ForgotPassword from "./pages/ForgotPassword";
+import Profile from "./pages/Profile";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -154,11 +157,22 @@ function App() {
               </AuthGuard>
             }
           />
+
+          <Route
+            path="/profile"
+            element={
+              <AuthGuard>
+                <Profile />
+              </AuthGuard>
+            }
+          />
+          <Route path="/login/forgot-password" element={<ForgotPassword />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/cookies" element={<CookiesPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
       </Routes>
     </BrowserRouter>
