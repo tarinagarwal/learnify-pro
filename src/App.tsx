@@ -54,7 +54,7 @@ function App() {
             }
           />
           <Route
-            path="/forgot-password"
+            path="/login/forgot-password"
             element={
               <AuthRedirectGuard>
                 <ForgotPassword />
