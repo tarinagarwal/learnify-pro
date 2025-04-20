@@ -26,6 +26,9 @@ export default function Signup() {
       } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/email-confirmation`,
+        },
       });
 
       if (signUpError) throw signUpError;
@@ -37,7 +40,7 @@ export default function Signup() {
 
       if (profileError) throw profileError;
 
-      navigate("/");
+      navigate("/email-confirmation");
     } catch (error: any) {
       setError(error.message);
     } finally {

@@ -29,6 +29,7 @@ import LanguageTutor from "./pages/LanguageTutor";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import EmailConfirmation from "./pages/EmailConfirmation";
 
 function App() {
   return (
@@ -61,6 +62,7 @@ function App() {
             }
           />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/email-confirmation" element={<EmailConfirmation />} />
           <Route
             path="/profile"
             element={
